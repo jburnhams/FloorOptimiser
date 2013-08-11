@@ -31,4 +31,19 @@ public class FloorSolutionTest {
         assertThat(solution.getTotalWaste()).isEqualTo(0);
     }
 
+    @Test
+    public void shouldEvaluatePositiveSurplusLength() {
+        FloorSolution solution = new FloorSolution(10, 10, 3, 8,3, 6,5, 3,6,2, 8,2 ,9);
+        assertThat(solution.isEvaluated()).isFalse();
+        assertThat(solution.getRows()).isEqualTo(4);
+        solution.evaluate();
+        assertThat(solution.isEvaluated()).isTrue();
+        assertThat(solution.getPlanksUsed()).isEqualTo(9);
+        assertThat(solution.getRowOffsets()).isEqualTo(new int[]{0,2,4,7,9});
+        assertThat(solution.getRowWaste()).isEqualTo(new int[]{1,1,1,0});
+        assertThat(solution.getTotalWaste()).isEqualTo(3);
+        assertThat(solution.getSurplusLength()).isEqualTo(9);
+        assertThat(solution.getSurplusPlanks()).isEqualTo(1);
+    }
+
 }

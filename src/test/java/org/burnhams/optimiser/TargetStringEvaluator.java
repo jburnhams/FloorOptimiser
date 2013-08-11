@@ -1,6 +1,6 @@
 package org.burnhams.optimiser;
 
-public class TargetStringEvaluator implements Evaluator<Character> {
+public class TargetStringEvaluator implements Evaluator<Character, Solution<Character>> {
 
     private final String targetString;
 

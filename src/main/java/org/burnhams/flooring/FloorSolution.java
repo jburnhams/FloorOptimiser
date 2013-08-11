@@ -3,6 +3,7 @@ package org.burnhams.flooring;
 import org.burnhams.optimiser.Solution;
 
 import java.util.List;
+import java.util.Map;
 
 public class FloorSolution extends Solution<Plank> {
 
@@ -20,9 +21,20 @@ public class FloorSolution extends Solution<Plank> {
     private int totalWaste;
     private int planksUsed;
 
+    public FloorSolution(FloorSolution floorSolution) {
+        super(floorSolution);
+        plankWidth = floorSolution.getPlankWidth();
+        floorWidth = floorSolution.getFloorWidth();
+        floorLength = floorSolution.getFloorLength();
+        rows = floorSolution.getRows();
+    }
+
     public FloorSolution(int floorWidth, int floorLength, int plankWidth, int... plankLengths) {
         this(Plank.createPlanks(plankWidth, plankLengths), floorWidth, floorLength);
+    }
 
+    public FloorSolution(int floorWidth, int floorLength, int plankWidth, Map<Integer, Integer> plankLengths) {
+        this(Plank.createPlanks(plankWidth, plankLengths), floorWidth, floorLength);
     }
 
     public FloorSolution(List<Plank> planks, int floorWidth, int floorLength) {
@@ -51,12 +63,13 @@ public class FloorSolution extends Solution<Plank> {
             } else {
                 currentRowLength += plank.getLength();
                 planksUsed++;
-                if (currentRowLength > this.floorLength) {
-                    rowOffsets[currentRow] = i+1;
+                if (currentRowLength >= this.floorLength) {
                     int waste = currentRowLength - floorLength;
                     rowWaste[currentRow] += waste;
                     totalWaste += waste;
                     currentRow++;
+                    rowOffsets[currentRow] = i+1;
+                    currentRowLength = 0;
                 }
             }
         }
@@ -116,6 +129,11 @@ public class FloorSolution extends Solution<Plank> {
     public void swap(int index1, int index2) {
         super.swap(index1, index2);
         evaluated = false;
+    }
+
+    @Override
+    public FloorSolution clone() {
+        return new FloorSolution(this);
     }
 
 }

@@ -3,7 +3,7 @@ package org.burnhams.optimiser;
 import java.lang.reflect.Array;
 import java.util.*;
 
-public class Solution<T> implements Iterable<T> {
+public class Solution<T> implements Iterable<T>, Cloneable {
 
     private final T[] solution;
     private final List<T> listView;
@@ -61,6 +61,11 @@ public class Solution<T> implements Iterable<T> {
     @Override
     public int hashCode() {
         return Arrays.hashCode(solution);
+    }
+
+    @Override
+    public Solution<T> clone() {
+        return new Solution<T>(this);
     }
 
     @Override
