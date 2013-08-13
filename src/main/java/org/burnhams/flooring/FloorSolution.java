@@ -2,6 +2,8 @@ package org.burnhams.flooring;
 
 import org.burnhams.optimiser.Solution;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.Map;
 
@@ -13,19 +15,20 @@ public class FloorSolution extends Solution<Plank> {
     private final int rows;
 
 
-    private boolean evaluated = false;
     private int[] rowOffsets;
     private int[] rowWaste;
     private int surplusPlanks;
     private int surplusLength;
     private int totalWaste;
     private int planksUsed;
+    private int longestLength;
 
     public FloorSolution(FloorSolution floorSolution) {
         super(floorSolution);
         plankWidth = floorSolution.getPlankWidth();
         floorWidth = floorSolution.getFloorWidth();
         floorLength = floorSolution.getFloorLength();
+        longestLength = floorSolution.getAreaLength();
         rows = floorSolution.getRows();
     }
 
@@ -41,12 +44,13 @@ public class FloorSolution extends Solution<Plank> {
         super(planks);
         this.floorLength = floorLength;
         this.floorWidth = floorWidth;
+        longestLength = floorLength;
         plankWidth = planks.get(0).getWidth();
         rows = (int)Math.ceil((double)floorWidth / plankWidth);
     }
 
     public void evaluate() {
-        if (evaluated) {
+        if (!hasChanged) {
             return;
         }
         rowOffsets = new int[rows+1];
@@ -55,6 +59,8 @@ public class FloorSolution extends Solution<Plank> {
         int currentRowLength = 0;
         surplusLength = 0;
         surplusPlanks = 0;
+        totalWaste = 0;
+        longestLength = floorLength;
         for (int i = 0; i < size(); i++) {
             Plank plank = get(i);
             if (currentRow >= rows) {
@@ -62,6 +68,9 @@ public class FloorSolution extends Solution<Plank> {
                 surplusPlanks++;
             } else {
                 currentRowLength += plank.getLength();
+                if (currentRowLength > longestLength) {
+                    longestLength = currentRowLength;
+                }
                 planksUsed++;
                 if (currentRowLength >= this.floorLength) {
                     int waste = currentRowLength - floorLength;
@@ -79,7 +88,7 @@ public class FloorSolution extends Solution<Plank> {
                 currentRowLength = 0;
             }
         }
-        evaluated = true;
+        hasChanged = false;
     }
 
     public int getPlankWidth() {
@@ -99,7 +108,7 @@ public class FloorSolution extends Solution<Plank> {
     }
 
     public boolean isEvaluated() {
-        return evaluated;
+        return !hasChanged;
     }
 
     public int[] getRowOffsets() {
@@ -126,14 +135,56 @@ public class FloorSolution extends Solution<Plank> {
         return planksUsed;
     }
 
-    public void swap(int index1, int index2) {
-        super.swap(index1, index2);
-        evaluated = false;
+    public int getAreaWidth() {
+        return rows * plankWidth;
+    }
+
+    public int getAreaLength() {
+        return longestLength;
+    }
+
+    @Override
+    public String toString() {
+        return "FloorSolution{" +
+                "surplusPlanks=" + surplusPlanks +
+                ", totalWaste=" + totalWaste +
+                ", planksUsed=" + planksUsed +
+                ", surplusLength=" + surplusLength +
+                '}';
     }
 
     @Override
     public FloorSolution clone() {
         return new FloorSolution(this);
+    }
+
+    public BufferedImage createImage(int width) {
+        double xMultiple = (double)width/getAreaLength();
+        int height = (int)Math.round(((double)getAreaWidth()/getAreaLength())*width);
+        double yMultiple = (double)height/getAreaWidth();
+        BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
+        Graphics2D graphics = result.createGraphics();
+        graphics.setBackground(Color.WHITE);
+        graphics.setColor(Color.GRAY);
+        graphics.setStroke(new BasicStroke(4));
+        graphics.clearRect(0, 0, width, height);
+        double plankHeight = yMultiple * plankWidth;
+        for (int i = 0; i < rows; i++) {
+            int yFrom = (int)Math.round(plankHeight * i);
+            int yTo = (int)Math.round(plankHeight * i + plankHeight);
+            double xFrom = 0;
+            for (int j = rowOffsets[i]; j < rowOffsets[i+1]; j++) {
+                Plank p = get(j);
+                double xTo = xFrom + xMultiple*p.getLength();
+                graphics.drawRect((int) xFrom, yFrom, (int) xTo - (int) xFrom, yTo - yFrom);
+                xFrom=xTo;
+            }
+        }
+        graphics.setStroke(new BasicStroke(3));
+        graphics.setColor(Color.BLACK);
+        graphics.drawRect(0,0,(int)Math.round(xMultiple*floorLength), (int)Math.round(yMultiple*floorWidth));
+        graphics.dispose();
+        return result;
     }
 
 }

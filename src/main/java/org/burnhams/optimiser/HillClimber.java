@@ -14,26 +14,37 @@ public class HillClimber<T, U extends Solution<T>> {
 
     private final int choices;
 
-    public HillClimber(Evaluator<T, U> evaluator, int choices) {
+    private final int maxNonImprovingMoves;
+
+    public HillClimber(Evaluator<T, U> evaluator, int choices, int maxNonImprovingMoves) {
         this.evaluator = evaluator;
         this.choices = choices;
+        this.maxNonImprovingMoves = maxNonImprovingMoves;
     }
 
     public U optimise(U candidate) {
         int run = 0;
+        candidate.shuffle();
         double cost = evaluator.evaluate(candidate);
-        boolean improved = true;
-        while (improved) {
+        boolean improved = false;
+        int nonImprovedMoves = 0;
+        while (improved || nonImprovedMoves < maxNonImprovingMoves) {
             U newBest = findBest(candidate, cost);
-            if (newBest == null) {
-                improved = false;
-            } else {
+            nonImprovedMoves++;
+            improved = false;
+            if (newBest != null) {
                 candidate = newBest;
-                cost = evaluator.evaluate(candidate);
+                double newCost = evaluator.evaluate(candidate);
+                if (newCost < cost) {
+                    improved = true;
+                    cost = newCost;
+                    nonImprovedMoves = 0;
+                }
             }
             logger.info("Run: "+run+", cost: "+cost+", Solution: "+candidate);
             run++;
         }
+        evaluator.evaluate(candidate);
         return candidate;
     }
 
@@ -41,19 +52,21 @@ public class HillClimber<T, U extends Solution<T>> {
     private U findBest(U candidate, double currentCost) {
         int size = candidate.size();
         U best = null;
-        double bestCost = currentCost;
+        double bestCost = Double.MAX_VALUE;
         for (int i = 0; i < choices; i++) {
             int from = random.nextInt(size);
             int to = random.nextInt(size);
-            candidate.swap(from, to);
-            double newCost = evaluator.evaluate(candidate);
-            if (newCost < bestCost) {
-                bestCost = newCost;
-                best = (U)candidate.clone();
+            if (candidate.swap(from, to)) {
+                double newCost = evaluator.evaluate(candidate);
+                if (newCost < bestCost) {
+                    bestCost = newCost;
+                    best = (U)candidate.clone();
+                }
+                candidate.swap(from, to);
             }
-            candidate.swap(from, to);
         }
-        return best;
+        logger.info("Found "+bestCost+" after "+choices+" attempts. Current cost "+currentCost);
+        return bestCost <= currentCost ? best : null;
     }
 
 }

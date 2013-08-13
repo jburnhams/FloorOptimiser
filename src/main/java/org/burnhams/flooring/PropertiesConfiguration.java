@@ -11,7 +11,7 @@ public class PropertiesConfiguration {
 
     public PropertiesConfiguration() throws IOException {
         properties = new Properties();
-        properties.load(getClass().getResourceAsStream("configuration.properties"));
+        properties.load(getClass().getResourceAsStream("/configuration.properties"));
     }
 
     public int getPlankWidth() {
@@ -30,6 +30,10 @@ public class PropertiesConfiguration {
 
     public int getHillClimbChoices() {
         return Integer.valueOf(properties.getProperty("hillclimb.choices"));
+    }
+
+    public int getHillClimbMaxNonImprovingMoves() {
+        return Integer.valueOf(properties.getProperty("hillclimb.maxNonImprovingMoves"));
     }
 
 

@@ -8,6 +8,8 @@ public class Solution<T> implements Iterable<T>, Cloneable {
     private final T[] solution;
     private final List<T> listView;
 
+    protected boolean hasChanged = true;
+
     public Solution(Solution<T> other) {
         this(Arrays.copyOf(other.solution, other.size()));
     }
@@ -21,6 +23,14 @@ public class Solution<T> implements Iterable<T>, Cloneable {
     public Solution(T... items) {
         solution = items;
         listView = Arrays.asList(solution);
+    }
+
+    public void shuffle() {
+        Random rnd = new Random();
+        for (int i = solution.length - 1; i >= 0; i--)
+        {
+            swap(rnd.nextInt(i + 1), i);
+        }
     }
 
     @Override
@@ -40,10 +50,16 @@ public class Solution<T> implements Iterable<T>, Cloneable {
         return new ArrayList<>(listView);
     }
 
-    public void swap(int index1, int index2) {
+    public boolean swap(int index1, int index2) {
         T s = solution[index1];
-        solution[index1] = solution[index2];
-        solution[index2] = s;
+        if (s.equals(solution[index2])) {
+            return false;
+        } else {
+            solution[index1] = solution[index2];
+            solution[index2] = s;
+            hasChanged = true;
+            return true;
+        }
     }
 
     @Override

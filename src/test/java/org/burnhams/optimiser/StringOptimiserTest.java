@@ -20,7 +20,7 @@ public class StringOptimiserTest {
         List<Character> chars = stringToList(target);
         List<Character> correct = new ArrayList<>(chars);
         Collections.shuffle(chars);
-        HillClimber<Character, Solution<Character>> hillClimber = new HillClimber<>(new TargetStringEvaluator(target), 100);
+        HillClimber<Character, Solution<Character>> hillClimber = new HillClimber<>(new TargetStringEvaluator(target), 100, 5);
         Solution<Character> solution = hillClimber.optimise(new Solution<>(chars));
         assertThat(solution.getList()).isEqualTo(correct);
     }
@@ -40,7 +40,7 @@ public class StringOptimiserTest {
         List<Character> correct = stringToList(target);
         logger.info("Target: "+correct);
         List<Character> chars = stringToList(actual);
-        HillClimber<Character, Solution<Character>> hillClimber = new HillClimber<>(new TargetStringEvaluator(target), 1000);
+        HillClimber<Character, Solution<Character>> hillClimber = new HillClimber<>(new TargetStringEvaluator(target), 1000, 5);
         Solution<Character> solution = hillClimber.optimise(new Solution<>(chars));
         assertThat(solution.getList()).isNotEqualTo(correct);
     }

@@ -7,9 +7,9 @@ public class FloorEvaluator implements Evaluator<Plank, FloorSolution> {
     public double evaluate(FloorSolution solution) {
         double cost = 0;
         solution.evaluate();
-        cost += 1000 * -solution.getSurplusLength();
-        cost += 100 * solution.getTotalWaste();
-        cost -= 10 * solution.getSurplusPlanks();
+        cost += 1 * -solution.getSurplusLength();
+        cost += 1 * solution.getTotalWaste();
+        cost -= 10000 * solution.getSurplusPlanks();
         return cost;
     }
 }

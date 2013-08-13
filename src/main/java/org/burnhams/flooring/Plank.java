@@ -20,6 +20,26 @@ public class Plank {
         return length;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Plank plank = (Plank) o;
+
+        if (length != plank.length) return false;
+        if (width != plank.width) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = width;
+        result = 31 * result + length;
+        return result;
+    }
+
     public static List<Plank> createPlanks(int width, Map<Integer, Integer> lengths) {
         List<Plank> result = new ArrayList<>();
         for (Map.Entry<Integer, Integer> e : lengths.entrySet()) {
