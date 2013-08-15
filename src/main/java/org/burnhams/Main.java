@@ -20,7 +20,7 @@ public class Main {
                 configuration.getFloorWidth(), configuration.getFloorLength(),
                 configuration.getPlankWidth(), configuration.getPlankLengths()
         );
-        HillClimber<Plank, FloorSolution> hillClimber = new HillClimber<>(evaluator, configuration.getHillClimbChoices(), configuration.getHillClimbMaxNonImprovingMoves());
+        HillClimber<Plank, FloorSolution> hillClimber = new HillClimber<>(evaluator, configuration);
         FloorSolution solution = hillClimber.optimise(initialSolution);
         BufferedImage image = solution.createImage(2000);
         ImageIO.write(image, "PNG", new File("solution.png"));

@@ -14,13 +14,34 @@ public class StringOptimiserTest {
 
     private static Logger logger = Logger.getLogger(StringOptimiserTest.class);
 
+    private Configuration configuration = new Configuration() {
+        @Override
+        public int getMaxIterations() {
+            return 100;
+        }
+
+        public double getStartingTemperature() {
+            return 100;
+        }
+
+        @Override
+        public int getHillClimbChoices() {
+            return 100;
+        }
+
+        @Override
+        public int getHillClimbMaxNonImprovingMoves() {
+            return 5;
+        }
+    };
+
     @Test
     public void shouldRearrangeHelloWorld() {
         String target = "Hello World";
         List<Character> chars = stringToList(target);
         List<Character> correct = new ArrayList<>(chars);
         Collections.shuffle(chars);
-        HillClimber<Character, Solution<Character>> hillClimber = new HillClimber<>(new TargetStringEvaluator(target), 100, 5);
+        HillClimber<Character, Solution<Character>> hillClimber = new HillClimber<>(new TargetStringEvaluator(target), configuration);
         Solution<Character> solution = hillClimber.optimise(new Solution<>(chars));
         assertThat(solution.getList()).isEqualTo(correct);
     }
@@ -40,7 +61,7 @@ public class StringOptimiserTest {
         List<Character> correct = stringToList(target);
         logger.info("Target: "+correct);
         List<Character> chars = stringToList(actual);
-        HillClimber<Character, Solution<Character>> hillClimber = new HillClimber<>(new TargetStringEvaluator(target), 1000, 5);
+        HillClimber<Character, Solution<Character>> hillClimber = new HillClimber<>(new TargetStringEvaluator(target), configuration);
         Solution<Character> solution = hillClimber.optimise(new Solution<>(chars));
         assertThat(solution.getList()).isNotEqualTo(correct);
     }

@@ -1,11 +1,13 @@
 package org.burnhams.flooring;
 
+import org.burnhams.optimiser.Configuration;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-public class PropertiesConfiguration {
+public class PropertiesConfiguration implements Configuration {
 
     private final Properties properties;
 
@@ -15,25 +17,39 @@ public class PropertiesConfiguration {
     }
 
     public int getPlankWidth() {
-        return Integer.valueOf(properties.getProperty("plank.width"));
+        return getInteger("plank.width");
 
     }
 
     public int getFloorWidth() {
-        return Integer.valueOf(properties.getProperty("floor.width"));
+        return getInteger("floor.width");
 
     }
 
     public int getFloorLength() {
-        return Integer.valueOf(properties.getProperty("floor.length"));
+        return getInteger("floor.length");
+    }
+
+    private Integer getInteger(String key) {
+        return Integer.valueOf(properties.getProperty(key));
+    }
+
+    @Override
+    public double getStartingTemperature() {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public int getMaxIterations() {
+        return getInteger("max.iterations");
     }
 
     public int getHillClimbChoices() {
-        return Integer.valueOf(properties.getProperty("hillclimb.choices"));
+        return getInteger("hillclimb.choices");
     }
 
     public int getHillClimbMaxNonImprovingMoves() {
-        return Integer.valueOf(properties.getProperty("hillclimb.maxNonImprovingMoves"));
+        return getInteger("hillclimb.maxNonImprovingMoves");
     }
 
 
@@ -42,7 +58,7 @@ public class PropertiesConfiguration {
         String[] lengths = properties.getProperty("plank.lengths").split(",");
         for (String length : lengths) {
             int l = Integer.valueOf(length);
-            int c = Integer.valueOf(properties.getProperty("plank."+l));
+            int c = getInteger("plank."+l);
             result.put(l,c);
         }
         return result;
