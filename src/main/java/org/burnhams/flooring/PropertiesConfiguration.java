@@ -34,9 +34,13 @@ public class PropertiesConfiguration implements Configuration {
         return Integer.valueOf(properties.getProperty(key));
     }
 
+    private Double getDouble(String key) {
+        return Double.valueOf(properties.getProperty(key));
+    }
+
     @Override
     public double getStartingTemperature() {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        return getDouble("starting.temperature");
     }
 
     @Override

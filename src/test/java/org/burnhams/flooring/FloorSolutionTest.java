@@ -65,4 +65,16 @@ public class FloorSolutionTest {
         ImageIO.write(image, "PNG", new File("testfloor.png"));
     }
 
+    @Test
+    public void shouldGetDistanceToClosestBelowGap() throws IOException {
+        FloorSolution solution = new FloorSolution(10, 10, 3, 8,3, 6,5, 3,6,2, 8,5 ,9);
+        solution.evaluate();
+        assertThat(solution.getDistanceToEndClosestBelowGap(0,8)).isEqualTo(2);
+        assertThat(solution.getDistanceToEndClosestBelowGap(1,6)).isEqualTo(3);
+        assertThat(solution.getDistanceToEndClosestBelowGap(2,3)).isEqualTo(5);
+        assertThat(solution.getDistanceToEndClosestBelowGap(2,9)).isEqualTo(1);
+        assertThat(solution.getDistanceToClosestGap()).isEqualTo(1);
+        assertThat(solution.getAverageDistanceToClosestGap()).isEqualTo(2.75);
+    }
+
 }

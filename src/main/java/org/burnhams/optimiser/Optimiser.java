@@ -28,7 +28,7 @@ public abstract class Optimiser<T, U extends Solution<T>> {
         while (!swapped) {
             int from = random.nextInt(size);
             int to = random.nextInt(size);
-            swapped = candidate.swap(from, to);
+            swapped = result.swap(from, to);
         }
         return result;
     }

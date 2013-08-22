@@ -4,7 +4,8 @@ import org.burnhams.flooring.FloorEvaluator;
 import org.burnhams.flooring.FloorSolution;
 import org.burnhams.flooring.Plank;
 import org.burnhams.flooring.PropertiesConfiguration;
-import org.burnhams.optimiser.HillClimber;
+import org.burnhams.optimiser.Optimiser;
+import org.burnhams.optimiser.SimulatedAnnealing;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -20,8 +21,8 @@ public class Main {
                 configuration.getFloorWidth(), configuration.getFloorLength(),
                 configuration.getPlankWidth(), configuration.getPlankLengths()
         );
-        HillClimber<Plank, FloorSolution> hillClimber = new HillClimber<>(evaluator, configuration);
-        FloorSolution solution = hillClimber.optimise(initialSolution);
+        Optimiser<Plank, FloorSolution> optimiser = new SimulatedAnnealing<>(evaluator, configuration);
+        FloorSolution solution = optimiser.optimise(initialSolution);
         BufferedImage image = solution.createImage(2000);
         ImageIO.write(image, "PNG", new File("solution.png"));
     }

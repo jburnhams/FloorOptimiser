@@ -12,12 +12,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class StringOptimiserTest {
 
+    public static final String HELLO_WORLD = "Hello World";
     private static Logger logger = Logger.getLogger(StringOptimiserTest.class);
 
     private Configuration configuration = new Configuration() {
         @Override
         public int getMaxIterations() {
-            return 100;
+            return 1000;
         }
 
         public double getStartingTemperature() {
@@ -36,13 +37,23 @@ public class StringOptimiserTest {
     };
 
     @Test
-    public void shouldRearrangeHelloWorld() {
-        String target = "Hello World";
+    public void shouldRearrangeHelloWorldUsingHillClimber() {
+        HillClimber<Character, Solution<Character>> hillClimber = new HillClimber<>(new TargetStringEvaluator(HELLO_WORLD), configuration);
+        shouldRearrangeHelloWorld(hillClimber);
+    }
+
+    @Test
+    public void shouldRearrangeHelloWorldUsingSimulatedAnnealing() {
+        SimulatedAnnealing<Character, Solution<Character>> sa = new SimulatedAnnealing<>(new TargetStringEvaluator(HELLO_WORLD), configuration);
+        shouldRearrangeHelloWorld(sa);
+    }
+
+    public void shouldRearrangeHelloWorld(Optimiser<Character, Solution<Character>> optimiser) {
+        String target = HELLO_WORLD;
         List<Character> chars = stringToList(target);
         List<Character> correct = new ArrayList<>(chars);
         Collections.shuffle(chars);
-        HillClimber<Character, Solution<Character>> hillClimber = new HillClimber<>(new TargetStringEvaluator(target), configuration);
-        Solution<Character> solution = hillClimber.optimise(new Solution<>(chars));
+        Solution<Character> solution = optimiser.optimise(new Solution<>(chars));
         assertThat(solution.getList()).isEqualTo(correct);
     }
 

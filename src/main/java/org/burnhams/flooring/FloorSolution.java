@@ -23,6 +23,10 @@ public class FloorSolution extends Solution<Plank> {
     private int planksUsed;
     private int longestLength;
 
+    private int minJoinGap;
+    private int smallJoinGapCount;
+    private double averageJoinGap;
+
     public FloorSolution(FloorSolution floorSolution) {
         super(floorSolution);
         plankWidth = floorSolution.getPlankWidth();
@@ -82,12 +86,32 @@ public class FloorSolution extends Solution<Plank> {
                 }
             }
         }
-        if (currentRow < rows) {
-            for (; currentRow < rows; currentRow++) {
-                surplusLength += currentRowLength - floorLength;
-                currentRowLength = 0;
-            }
+        for (; currentRow < rows; currentRow++) {
+            surplusLength += currentRowLength - floorLength;
+            currentRowLength = 0;
         }
+        int plankNum = 0;
+        minJoinGap = Integer.MAX_VALUE;
+        smallJoinGapCount = 0;
+        long totalJoinGap = 0;
+        int count = 0;
+        for (int row = 0; row < rows-1 && rowOffsets[row+2] > 0; row++) {
+            int rowDistance = 0;
+            for (; plankNum < rowOffsets[row+1]-1; plankNum++) {
+                rowDistance += get(plankNum).getLength();
+                int distance = getDistanceToEndClosestBelowGap(row, rowDistance);
+                totalJoinGap += distance;
+                count++;
+                if (distance < minJoinGap) {
+                    minJoinGap = distance;
+                }
+                if (distance < 100) {
+                    smallJoinGapCount++;
+                }
+            }
+            plankNum++;
+        }
+        averageJoinGap = (double)totalJoinGap / count;
         hasChanged = false;
     }
 
@@ -150,12 +174,53 @@ public class FloorSolution extends Solution<Plank> {
                 ", totalWaste=" + totalWaste +
                 ", planksUsed=" + planksUsed +
                 ", surplusLength=" + surplusLength +
+                ", smallJoinGapCount="+smallJoinGapCount+
+                ", minJoinGap=" + minJoinGap +
+                ", averageJoinGap=" + averageJoinGap +
                 '}';
     }
 
     @Override
     public FloorSolution clone() {
         return new FloorSolution(this);
+    }
+
+    public int getSmallJoinGapCount() {
+        return smallJoinGapCount;
+    }
+
+    public int getDistanceToClosestGap() {
+        return minJoinGap;
+    }
+
+    public double getAverageDistanceToClosestGap() {
+        return averageJoinGap;
+    }
+
+    public int getDistanceToEndClosestBelowGap(int row, int distanceToPlankEnd) {
+        int nextRow = row+1;
+        if (nextRow >= rows) {
+            throw new IllegalArgumentException("Must not be called for end row");
+        }
+        if (rowOffsets[nextRow+1]==0) {
+            throw new IllegalArgumentException("Must not be called for last complete row");
+        }
+        int offset = rowOffsets[nextRow];
+        if (distanceToPlankEnd >= floorLength) {
+            throw new IllegalArgumentException("Must not be called for end plank");
+        }
+        int currentDistance = -1;
+        int nextPlankEnd = 0;
+        for (int i = offset; i < rowOffsets[nextRow+1]-1; i++) {
+            nextPlankEnd += get(i).getLength();
+            int nextDistance = Math.abs(nextPlankEnd-distanceToPlankEnd);
+            if (currentDistance >= 0 && nextDistance > currentDistance) {
+                return currentDistance;
+            } else {
+                currentDistance = nextDistance;
+            }
+        }
+        return currentDistance;
     }
 
     public BufferedImage createImage(int width) {
@@ -173,7 +238,11 @@ public class FloorSolution extends Solution<Plank> {
             int yFrom = (int)Math.round(plankHeight * i);
             int yTo = (int)Math.round(plankHeight * i + plankHeight);
             double xFrom = 0;
-            for (int j = rowOffsets[i]; j < rowOffsets[i+1]; j++) {
+            int rowEnd = rowOffsets[i+1];
+            if (rowEnd == 0) {
+                rowEnd = size();
+            }
+            for (int j = rowOffsets[i]; j < rowEnd; j++) {
                 Plank p = get(j);
                 double xTo = xFrom + xMultiple*p.getLength();
                 graphics.drawRect((int) xFrom, yFrom, (int) xTo - (int) xFrom, yTo - yFrom);

@@ -58,4 +58,11 @@ public class Plank {
         return result;
     }
 
+    @Override
+    public String toString() {
+        return "Plank{" +
+                width +
+                " x " + length +
+                '}';
+    }
 }
