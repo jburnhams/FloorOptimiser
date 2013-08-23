@@ -5,3 +5,7 @@ create weighted average gap distance (over max plank length)
 average plank lengths weighted by distance to centre - either separate horiz and vert, or pythagoras
 
 shuffle neighbour function - use to start with under brief hill climb to get initial
+
+use longs for higher iterations
+
+gaps two (n?) rows down?
