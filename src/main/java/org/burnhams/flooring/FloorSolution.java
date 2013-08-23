@@ -7,6 +7,8 @@ import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.Map;
 
+import static org.burnhams.utils.StringUtils.twoSf;
+
 public class FloorSolution extends Solution<Plank> {
 
     private final int plankWidth;
@@ -24,6 +26,7 @@ public class FloorSolution extends Solution<Plank> {
     private int longestLength;
 
     private int minJoinGap;
+    private int tinyJoinGapCount;
     private int smallJoinGapCount;
     private double averageJoinGap;
 
@@ -93,6 +96,7 @@ public class FloorSolution extends Solution<Plank> {
         int plankNum = 0;
         minJoinGap = Integer.MAX_VALUE;
         smallJoinGapCount = 0;
+        tinyJoinGapCount = 0;
         long totalJoinGap = 0;
         int count = 0;
         for (int row = 0; row < rows-1 && rowOffsets[row+2] > 0; row++) {
@@ -105,7 +109,10 @@ public class FloorSolution extends Solution<Plank> {
                 if (distance < minJoinGap) {
                     minJoinGap = distance;
                 }
-                if (distance < 100) {
+                if (distance <= 200) {
+                    if (distance <= 100) {
+                        tinyJoinGapCount++;
+                    }
                     smallJoinGapCount++;
                 }
             }
@@ -135,7 +142,7 @@ public class FloorSolution extends Solution<Plank> {
         return !hasChanged;
     }
 
-    public int[] getRowOffsets() {
+    int[] getRowOffsets() {
         return rowOffsets;
     }
 
@@ -174,15 +181,20 @@ public class FloorSolution extends Solution<Plank> {
                 ", totalWaste=" + totalWaste +
                 ", planksUsed=" + planksUsed +
                 ", surplusLength=" + surplusLength +
+                ", tinyJoinGapCount="+tinyJoinGapCount+
                 ", smallJoinGapCount="+smallJoinGapCount+
                 ", minJoinGap=" + minJoinGap +
-                ", averageJoinGap=" + averageJoinGap +
+                ", averageJoinGap=" + twoSf(averageJoinGap) +
                 '}';
     }
 
     @Override
     public FloorSolution clone() {
         return new FloorSolution(this);
+    }
+
+    public int getTinyJoinGapCount() {
+        return tinyJoinGapCount;
     }
 
     public int getSmallJoinGapCount() {
@@ -256,4 +268,45 @@ public class FloorSolution extends Solution<Plank> {
         return result;
     }
 
+    public int getFullRows() {
+        int result = rows;
+        while (rowOffsets[result]==0) {
+            result--;
+        }
+        return result;
+    }
+
+    public int getRowStart(int row) {
+        return rowOffsets[row];
+    }
+
+    public int getRowEnd(int row) {
+        return rowOffsets[row+1];
+    }
+
+    public FloorSolution swapRows(int row1, int row2) {
+        FloorSolution result = clone();
+        int rowEnd2 = rowOffsets[row2 + 1];
+        int rowEnd1 = rowOffsets[row1 + 1];
+        if (rowEnd1 == 0 || rowEnd2 == 0) {
+            throw new IllegalArgumentException("Must only swap full rows");
+        }
+        result.swap(rowOffsets[row1], rowEnd1, rowOffsets[row2], rowEnd2);
+        return result;
+    }
+
+    public String getLengthsList() {
+        StringBuilder result = new StringBuilder();
+        int row = 1;
+        for (int i = 0; i<size(); i++) {
+            if (row < rowOffsets.length && i==rowOffsets[row]) {
+                result.append("\n");
+                row++;
+            } else if (i > 0) {
+                result.append(", ");
+            }
+            result.append(get(i).getLength());
+        }
+        return result.toString();
+    }
 }

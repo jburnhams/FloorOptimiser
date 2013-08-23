@@ -1,6 +1,7 @@
 package org.burnhams.optimiser;
 
 import org.apache.log4j.Logger;
+import org.burnhams.optimiser.neighbourhood.NeighbourhoodFunction;
 
 public class HillClimber<T, U extends Solution<T>> extends Optimiser<T, U> {
 
@@ -10,15 +11,14 @@ public class HillClimber<T, U extends Solution<T>> extends Optimiser<T, U> {
 
     private final int maxNonImprovingMoves;
 
-    public HillClimber(Evaluator<T, U> evaluator, Configuration configuration) {
-        super(configuration, evaluator);
+    public HillClimber(Evaluator<T, U> evaluator, Configuration configuration, NeighbourhoodFunction<T, U>... neighbourhoodFunctions) {
+        super(configuration, evaluator, neighbourhoodFunctions);
         this.choices = configuration.getHillClimbChoices();
         this.maxNonImprovingMoves = configuration.getHillClimbMaxNonImprovingMoves();
     }
 
     public U optimise(U candidate) {
         int run = 0;
-        candidate.shuffle();
         double cost = evaluate(candidate);
         boolean improved = false;
         int nonImprovedMoves = 0;

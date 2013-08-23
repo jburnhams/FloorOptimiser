@@ -57,7 +57,7 @@ public class StringOptimiserTest {
         assertThat(solution.getList()).isEqualTo(correct);
     }
 
-    private List<Character> stringToList(String input) {
+    public static List<Character> stringToList(String input) {
         List<Character> chars = new ArrayList<>(input.length());
         for (int i = 0; i < input.length(); i++) {
             chars.add(input.charAt(i));

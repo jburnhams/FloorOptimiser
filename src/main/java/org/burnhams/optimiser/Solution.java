@@ -62,6 +62,25 @@ public class Solution<T> implements Iterable<T>, Cloneable {
         }
     }
 
+    public void swap(int from1, int to1, int from2, int to2) {
+        T[] original = Arrays.copyOf(solution, solution.length);
+        int source = 0;
+        for (int i = 0; i < solution.length; i++, source++) {
+            if (source == to1) {
+                source = to2;
+            } else if (source == to2) {
+                source = to1;
+            }
+
+            if (source == from1) {
+                source = from2;
+            } else if (source == from2) {
+                source = from1;
+            }
+            solution[i] = original[source];
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

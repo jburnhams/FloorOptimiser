@@ -1,13 +1,16 @@
 package org.burnhams.optimiser;
 
 import org.apache.log4j.Logger;
+import org.burnhams.optimiser.neighbourhood.NeighbourhoodFunction;
+
+import static org.burnhams.utils.StringUtils.twoSf;
 
 public class SimulatedAnnealing<T, U extends Solution<T>> extends Optimiser<T, U> {
 
     private static Logger logger = Logger.getLogger(SimulatedAnnealing.class);
 
-    public SimulatedAnnealing(Evaluator<T, U> evaluator, Configuration configuration) {
-        super(configuration, evaluator);
+    public SimulatedAnnealing(Evaluator<T, U> evaluator, Configuration configuration, NeighbourhoodFunction<T, U>... neighbourhoodFunctions) {
+        super(configuration, evaluator, neighbourhoodFunctions);
     }
 
     @Override
@@ -32,7 +35,9 @@ public class SimulatedAnnealing<T, U extends Solution<T>> extends Optimiser<T, U
             double d = ((currentCost - neighbourCost)/maxCost)*startingTemperature;
             double acceptance = Math.exp(d / temperature);
             double p = Math.random();
-            logger.info("Iteration "+i+", Temperature "+temperature+", Current Cost "+currentCost+", Neighbour Cost "+neighbourCost+", Diff "+d+", P "+p+", Acceptance Prob "+acceptance+", Best Cost "+bestCost+", "+best);
+            if (i % 100 == 0 || i == configuration.getMaxIterations()-1) {
+                logger.info("Iteration "+i+", Temperature "+twoSf(temperature)+", Current Cost "+twoSf(currentCost)+", Neighbour Cost "+twoSf(neighbourCost)+", Diff "+twoSf(d)+", P "+twoSf(p)+", Acceptance Prob "+twoSf(acceptance)+", Best Cost "+twoSf(bestCost)+", "+best);
+            }
             if (p < acceptance) {
                 if (neighbourCost < bestCost) {
                     bestCost = neighbourCost;

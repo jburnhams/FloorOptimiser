@@ -65,6 +65,36 @@ public class FloorSolutionTest {
         ImageIO.write(image, "PNG", new File("testfloor.png"));
     }
 
+
+    private void testRowSwap(FloorSolution solution, int row1, int row2) {
+        solution.evaluate();
+        FloorSolution swap1 = solution.swapRows(row1, row2);
+        swap1.evaluate();
+        FloorSolution swap2 = swap1.swapRows(row2, row1);
+        swap2.evaluate();
+        String lengths1 = solution.getLengthsList();
+        String lengths2 = swap2.getLengthsList();
+        assertThat(lengths2).isEqualTo(lengths1);
+    }
+
+    @Test
+    public void shouldSwapRows() throws IOException {
+        FloorSolution solution = new FloorSolution(10, 10, 3, 8,3, 6,5, 3,6,2, 8,5 ,9);
+        testRowSwap(solution, 0,2);
+        testRowSwap(solution, 0,0);
+        testRowSwap(solution, 0,1);
+        testRowSwap(solution, 3,2);
+        testRowSwap(solution, 1,2);
+    }
+
+    @Test
+    public void shouldGetLengthsList() {
+        FloorSolution solution = new FloorSolution(10, 10, 3, 8,3, 6,5, 3,6,2, 8,5 ,9);
+        solution.evaluate();
+        assertThat(solution.getLengthsList()).isEqualTo("8, 3\n6, 5\n3, 6, 2\n8, 5\n9");
+    }
+
+
     @Test
     public void shouldGetDistanceToClosestBelowGap() throws IOException {
         FloorSolution solution = new FloorSolution(10, 10, 3, 8,3, 6,5, 3,6,2, 8,5 ,9);
