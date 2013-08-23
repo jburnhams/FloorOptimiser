@@ -11,6 +11,7 @@ import org.burnhams.optimiser.Optimiser;
 import org.burnhams.optimiser.SimulatedAnnealing;
 import org.burnhams.optimiser.neighbourhood.NeighbourhoodFunction;
 import org.burnhams.optimiser.neighbourhood.RandomSwapNeighbour;
+import org.burnhams.optimiser.neighbourhood.ShuffleNeighbour;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -28,11 +29,18 @@ public class Main {
         );
         initialSolution.shuffle();
         initialSolution.evaluate();
+        Optimiser<Plank, FloorSolution> optimiser;
+        FloorSolution solution = initialSolution;
+
+        optimiser = new HillClimber<>(evaluator, configuration, 1000, 1, new ShuffleNeighbour<Plank, FloorSolution>(configuration));
+        solution = optimiser.optimise(solution);
+
+
         NeighbourhoodFunction[] neighbourhoodFunctions = {new RandomSwapNeighbour<Plank, FloorSolution>(configuration),
                 new WithinRowSwapNeighbour(configuration),
                 new RowSwapNeighbour(configuration)};
-        Optimiser<Plank, FloorSolution> optimiser = new SimulatedAnnealing<>(evaluator, configuration, neighbourhoodFunctions);
-        FloorSolution solution = optimiser.optimise(initialSolution);
+        optimiser = new SimulatedAnnealing<>(evaluator, configuration, neighbourhoodFunctions);
+        solution = optimiser.optimise(solution);
 
         optimiser = new HillClimber<>(evaluator, configuration, neighbourhoodFunctions);
         solution = optimiser.optimise(solution);

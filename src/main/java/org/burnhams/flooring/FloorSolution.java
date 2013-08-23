@@ -15,6 +15,7 @@ public class FloorSolution extends Solution<Plank> {
     private final int floorWidth;
     private final int floorLength;
     private final int rows;
+    private final int maxPlankLength;
 
 
     private int[] rowOffsets;
@@ -26,9 +27,9 @@ public class FloorSolution extends Solution<Plank> {
     private int longestLength;
 
     private int minJoinGap;
-    private int tinyJoinGapCount;
-    private int smallJoinGapCount;
+    private int minJoinGapCount;
     private double averageJoinGap;
+    private double averageWeightedJoinGap;
 
     public FloorSolution(FloorSolution floorSolution) {
         super(floorSolution);
@@ -37,6 +38,7 @@ public class FloorSolution extends Solution<Plank> {
         floorLength = floorSolution.getFloorLength();
         longestLength = floorSolution.getAreaLength();
         rows = floorSolution.getRows();
+        maxPlankLength = floorSolution.getMaxPlankLength();
     }
 
     public FloorSolution(int floorWidth, int floorLength, int plankWidth, int... plankLengths) {
@@ -54,6 +56,13 @@ public class FloorSolution extends Solution<Plank> {
         longestLength = floorLength;
         plankWidth = planks.get(0).getWidth();
         rows = (int)Math.ceil((double)floorWidth / plankWidth);
+        int maxLength = 0;
+        for (Plank p : planks) {
+            if (p.getLength() > maxLength) {
+                maxLength = p.getLength();
+            }
+        }
+        maxPlankLength = maxLength;
     }
 
     public void evaluate() {
@@ -62,12 +71,20 @@ public class FloorSolution extends Solution<Plank> {
         }
         rowOffsets = new int[rows+1];
         rowWaste = new int[rows];
-        int currentRow = 0;
-        int currentRowLength = 0;
         surplusLength = 0;
         surplusPlanks = 0;
         totalWaste = 0;
         longestLength = floorLength;
+
+        evaluatePlanks();
+        evaluateJoinGaps();
+
+        hasChanged = false;
+    }
+
+    private void evaluatePlanks() {
+        int currentRow = 0;
+        int currentRowLength = 0;
         for (int i = 0; i < size(); i++) {
             Plank plank = get(i);
             if (currentRow >= rows) {
@@ -93,10 +110,12 @@ public class FloorSolution extends Solution<Plank> {
             surplusLength += currentRowLength - floorLength;
             currentRowLength = 0;
         }
+    }
+
+    private void evaluateJoinGaps() {
         int plankNum = 0;
         minJoinGap = Integer.MAX_VALUE;
-        smallJoinGapCount = 0;
-        tinyJoinGapCount = 0;
+        double totalWeightedJoinGap = 0;
         long totalJoinGap = 0;
         int count = 0;
         for (int row = 0; row < rows-1 && rowOffsets[row+2] > 0; row++) {
@@ -104,22 +123,23 @@ public class FloorSolution extends Solution<Plank> {
             for (; plankNum < rowOffsets[row+1]-1; plankNum++) {
                 rowDistance += get(plankNum).getLength();
                 int distance = getDistanceToEndClosestBelowGap(row, rowDistance);
+
                 totalJoinGap += distance;
+                double weightedGap = (double) maxPlankLength / Math.max(distance, 0.5);
+                totalWeightedJoinGap += weightedGap * weightedGap;
+
                 count++;
                 if (distance < minJoinGap) {
                     minJoinGap = distance;
-                }
-                if (distance <= 200) {
-                    if (distance <= 100) {
-                        tinyJoinGapCount++;
-                    }
-                    smallJoinGapCount++;
+                    minJoinGapCount = 1;
+                } else if (distance == minJoinGap) {
+                    minJoinGapCount++;
                 }
             }
             plankNum++;
         }
         averageJoinGap = (double)totalJoinGap / count;
-        hasChanged = false;
+        averageWeightedJoinGap = totalWeightedJoinGap / count;
     }
 
     public int getPlankWidth() {
@@ -181,9 +201,9 @@ public class FloorSolution extends Solution<Plank> {
                 ", totalWaste=" + totalWaste +
                 ", planksUsed=" + planksUsed +
                 ", surplusLength=" + surplusLength +
-                ", tinyJoinGapCount="+tinyJoinGapCount+
-                ", smallJoinGapCount="+smallJoinGapCount+
                 ", minJoinGap=" + minJoinGap +
+                ", minJoinGapCount=" + minJoinGapCount +
+                ", averageWeightedJoinGap=" + twoSf(averageWeightedJoinGap) +
                 ", averageJoinGap=" + twoSf(averageJoinGap) +
                 '}';
     }
@@ -193,20 +213,20 @@ public class FloorSolution extends Solution<Plank> {
         return new FloorSolution(this);
     }
 
-    public int getTinyJoinGapCount() {
-        return tinyJoinGapCount;
-    }
-
-    public int getSmallJoinGapCount() {
-        return smallJoinGapCount;
-    }
-
     public int getDistanceToClosestGap() {
         return minJoinGap;
     }
 
+    public int getDistanceToClosestGapCount() {
+        return minJoinGapCount;
+    }
+
     public double getAverageDistanceToClosestGap() {
         return averageJoinGap;
+    }
+
+    public double getAverageWeightedDistanceToClosestGap() {
+        return averageWeightedJoinGap;
     }
 
     public int getDistanceToEndClosestBelowGap(int row, int distanceToPlankEnd) {
@@ -282,6 +302,10 @@ public class FloorSolution extends Solution<Plank> {
 
     public int getRowEnd(int row) {
         return rowOffsets[row+1];
+    }
+
+    public int getMaxPlankLength() {
+        return maxPlankLength;
     }
 
     public FloorSolution swapRows(int row1, int row2) {

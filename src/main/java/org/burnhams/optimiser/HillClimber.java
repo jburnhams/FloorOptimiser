@@ -3,6 +3,8 @@ package org.burnhams.optimiser;
 import org.apache.log4j.Logger;
 import org.burnhams.optimiser.neighbourhood.NeighbourhoodFunction;
 
+import static org.burnhams.utils.StringUtils.twoSf;
+
 public class HillClimber<T, U extends Solution<T>> extends Optimiser<T, U> {
 
     private static Logger logger = Logger.getLogger(HillClimber.class);
@@ -11,10 +13,14 @@ public class HillClimber<T, U extends Solution<T>> extends Optimiser<T, U> {
 
     private final int maxNonImprovingMoves;
 
-    public HillClimber(Evaluator<T, U> evaluator, Configuration configuration, NeighbourhoodFunction<T, U>... neighbourhoodFunctions) {
+    public HillClimber(Evaluator<T, U> evaluator, Configuration configuration, int choices, int maxNonImprovingMoves, NeighbourhoodFunction<T, U>... neighbourhoodFunctions) {
         super(configuration, evaluator, neighbourhoodFunctions);
-        this.choices = configuration.getHillClimbChoices();
-        this.maxNonImprovingMoves = configuration.getHillClimbMaxNonImprovingMoves();
+        this.choices = choices;
+        this.maxNonImprovingMoves = maxNonImprovingMoves;
+    }
+
+    public HillClimber(Evaluator<T, U> evaluator, Configuration configuration, NeighbourhoodFunction<T, U>... neighbourhoodFunctions) {
+        this(evaluator, configuration, configuration.getHillClimbChoices(), configuration.getHillClimbMaxNonImprovingMoves(), neighbourhoodFunctions);
     }
 
     public U optimise(U candidate) {
@@ -23,7 +29,7 @@ public class HillClimber<T, U extends Solution<T>> extends Optimiser<T, U> {
         boolean improved = false;
         int nonImprovedMoves = 0;
         while (improved || nonImprovedMoves < maxNonImprovingMoves) {
-            U newBest = findBest(candidate, cost);
+            U newBest = findBest(run, candidate, cost);
             nonImprovedMoves++;
             improved = false;
             if (newBest != null) {
@@ -35,14 +41,13 @@ public class HillClimber<T, U extends Solution<T>> extends Optimiser<T, U> {
                     nonImprovedMoves = 0;
                 }
             }
-            logger.info("Run: "+run+", cost: "+cost+", Solution: "+candidate);
             run++;
         }
         return candidate;
     }
 
 
-    private U findBest(U candidate, double currentCost) {
+    private U findBest(int run, U candidate, double currentCost) {
         U best = null;
         double bestCost = Double.MAX_VALUE;
         for (int i = 0; i < choices; i++) {
@@ -53,7 +58,7 @@ public class HillClimber<T, U extends Solution<T>> extends Optimiser<T, U> {
                 best = neighbour;
             }
         }
-        logger.info("Found "+bestCost+" after "+choices+" attempts. Current cost "+currentCost);
+        logger.info("Run: "+run+", neighbour cost: "+twoSf(bestCost)+", best: "+twoSf(currentCost)+", Solution: "+candidate);
         return bestCost <= currentCost ? best : null;
     }
 
