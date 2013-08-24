@@ -1,5 +1,6 @@
 package org.burnhams.flooring;
 
+import org.assertj.core.data.Offset;
 import org.junit.Test;
 
 import javax.imageio.ImageIO;
@@ -99,12 +100,14 @@ public class FloorSolutionTest {
     public void shouldGetDistanceToClosestBelowGap() throws IOException {
         FloorSolution solution = new FloorSolution(10, 10, 3, 8,3, 6,5, 3,6,2, 8,5 ,9);
         solution.evaluate();
-        assertThat(solution.getDistanceToEndClosestBelowGap(0,8)).isEqualTo(2);
-        assertThat(solution.getDistanceToEndClosestBelowGap(1,6)).isEqualTo(3);
-        assertThat(solution.getDistanceToEndClosestBelowGap(2,3)).isEqualTo(5);
-        assertThat(solution.getDistanceToEndClosestBelowGap(2,9)).isEqualTo(1);
+        assertThat(solution.getDistanceToEndClosestBelowGap(1,8)).isEqualTo(2);
+        assertThat(solution.getDistanceToEndClosestBelowGap(2,6)).isEqualTo(3);
+        assertThat(solution.getDistanceToEndClosestBelowGap(3,3)).isEqualTo(5);
+        assertThat(solution.getDistanceToEndClosestBelowGap(3,9)).isEqualTo(1);
         assertThat(solution.getDistanceToClosestGap()).isEqualTo(1);
         assertThat(solution.getAverageDistanceToClosestGap()).isEqualTo(2.75);
+        assertThat(solution.getAverageWeightedDistanceToClosestGap()).isEqualTo(28.3725, Offset.offset(0.001));
+        assertThat(solution.getAverageWeightedDistanceToClosestFurtherGap()).isEqualTo(50.625);
     }
 
 }

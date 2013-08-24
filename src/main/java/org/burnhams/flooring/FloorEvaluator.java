@@ -7,13 +7,18 @@ public class FloorEvaluator implements Evaluator<Plank, FloorSolution> {
     public double evaluate(FloorSolution solution) {
         double cost = 0;
         solution.evaluate();
+
         cost += 100 * -Math.min(0,solution.getSurplusLength());
         cost += 0.1 * solution.getTotalWaste();
         cost -= 100 * solution.getSurplusPlanks();
+
+        cost += 0.1 * solution.getAverageWeightedDistanceToClosestFurtherGap();
+
         cost += 10 * solution.getAverageWeightedDistanceToClosestGap();
-        double distance = Math.max(0.5, solution.getDistanceToClosestGap());
-        cost += ((double)solution.getMaxPlankLength() / distance) * 200;
-        cost += ((double)solution.getMaxPlankLength() / solution.getAverageDistanceToClosestGap()) * 50;
+
+        cost += ((double)solution.getMaxPlankLength() / Math.max(0.5, solution.getDistanceToClosestGap())) * 200;
+
+        cost += solution.getAverageWeightedLength()*20;
         return cost;
     }
 }

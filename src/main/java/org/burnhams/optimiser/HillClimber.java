@@ -3,6 +3,13 @@ package org.burnhams.optimiser;
 import org.apache.log4j.Logger;
 import org.burnhams.optimiser.neighbourhood.NeighbourhoodFunction;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 import static org.burnhams.utils.StringUtils.twoSf;
 
 public class HillClimber<T, U extends Solution<T>> extends Optimiser<T, U> {
@@ -13,10 +20,15 @@ public class HillClimber<T, U extends Solution<T>> extends Optimiser<T, U> {
 
     private final int maxNonImprovingMoves;
 
+    private final int threads;
+
+    private ExecutorService executorService;
+
     public HillClimber(Evaluator<T, U> evaluator, Configuration configuration, int choices, int maxNonImprovingMoves, NeighbourhoodFunction<T, U>... neighbourhoodFunctions) {
         super(configuration, evaluator, neighbourhoodFunctions);
         this.choices = choices;
         this.maxNonImprovingMoves = maxNonImprovingMoves;
+        threads = configuration.getThreads();
     }
 
     public HillClimber(Evaluator<T, U> evaluator, Configuration configuration, NeighbourhoodFunction<T, U>... neighbourhoodFunctions) {
@@ -24,12 +36,13 @@ public class HillClimber<T, U extends Solution<T>> extends Optimiser<T, U> {
     }
 
     public U optimise(U candidate) {
+        executorService = Executors.newFixedThreadPool(threads);
         int run = 0;
         double cost = evaluate(candidate);
         boolean improved = false;
         int nonImprovedMoves = 0;
         while (improved || nonImprovedMoves < maxNonImprovingMoves) {
-            U newBest = findBest(run, candidate, cost);
+            U newBest = threads > 1 ? findBestMultiThreaded(run, candidate, cost) : findBestSingleThreaded(run, candidate, cost);
             nonImprovedMoves++;
             improved = false;
             if (newBest != null) {
@@ -43,11 +56,34 @@ public class HillClimber<T, U extends Solution<T>> extends Optimiser<T, U> {
             }
             run++;
         }
+        executorService.shutdown();
         return candidate;
     }
 
 
-    private U findBest(int run, U candidate, double currentCost) {
+    private U findBestMultiThreaded(int run, final U candidate, double currentCost) {
+       final boolean preEvaluate = candidate instanceof PreEvaluatable;
+        List<Future<U>> futures = new ArrayList<>(choices);
+        Callable<U> callable = new Callable<U>() {
+            @Override
+            public U call() throws Exception {
+                U neighbour = getNeighbour(candidate);
+                if (preEvaluate) {
+                    ((PreEvaluatable)neighbour).preEvaluate();
+                }
+                return neighbour;
+            }
+        };
+        for (int i = 0; i < choices; i++) {
+            futures.add(executorService.submit(callable));
+        }
+        U best = getBestFromFutures(futures);
+        double bestCost = evaluate(best);
+        logger.info("Run: "+run+", neighbour cost: "+twoSf(bestCost)+", current: "+twoSf(currentCost)+", Solution: "+candidate);
+        return bestCost <= currentCost ? best : null;
+    }
+
+    private U findBestSingleThreaded(int run, U candidate, double currentCost) {
         U best = null;
         double bestCost = Double.MAX_VALUE;
         for (int i = 0; i < choices; i++) {
@@ -58,7 +94,7 @@ public class HillClimber<T, U extends Solution<T>> extends Optimiser<T, U> {
                 best = neighbour;
             }
         }
-        logger.info("Run: "+run+", neighbour cost: "+twoSf(bestCost)+", best: "+twoSf(currentCost)+", Solution: "+candidate);
+        logger.debug("Run: " + run + ", neighbour cost: " + twoSf(bestCost) + ", current: " + twoSf(currentCost) + ", Solution: " + candidate);
         return bestCost <= currentCost ? best : null;
     }
 

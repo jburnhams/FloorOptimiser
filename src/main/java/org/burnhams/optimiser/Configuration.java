@@ -2,9 +2,11 @@ package org.burnhams.optimiser;
 
 public interface Configuration {
 
+    public int getThreads();
+
     public double getStartingTemperature();
 
-    public int getMaxIterations();
+    public long getMaxIterations();
 
     public int getHillClimbChoices();
 

@@ -30,6 +30,10 @@ public class PropertiesConfiguration implements Configuration {
         return getInteger("floor.length");
     }
 
+    public int getThreads() {
+        return getInteger("threads");
+    }
+
     private Integer getInteger(String key) {
         return Integer.valueOf(properties.getProperty(key));
     }
@@ -44,8 +48,8 @@ public class PropertiesConfiguration implements Configuration {
     }
 
     @Override
-    public int getMaxIterations() {
-        return getInteger("max.iterations");
+    public long getMaxIterations() {
+        return Long.valueOf(properties.getProperty("max.iterations"));
     }
 
     public int getHillClimbChoices() {

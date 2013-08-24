@@ -1,6 +1,0 @@
-
-average plank lengths weighted by distance to centre - either separate horiz and vert, or pythagoras
-
-use longs for higher iterations
-
-gaps two (n?) rows down?

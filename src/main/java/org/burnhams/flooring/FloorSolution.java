@@ -1,5 +1,6 @@
 package org.burnhams.flooring;
 
+import org.burnhams.optimiser.PreEvaluatable;
 import org.burnhams.optimiser.Solution;
 
 import java.awt.*;
@@ -9,7 +10,7 @@ import java.util.Map;
 
 import static org.burnhams.utils.StringUtils.twoSf;
 
-public class FloorSolution extends Solution<Plank> {
+public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
 
     private final int plankWidth;
     private final int floorWidth;
@@ -30,6 +31,9 @@ public class FloorSolution extends Solution<Plank> {
     private int minJoinGapCount;
     private double averageJoinGap;
     private double averageWeightedJoinGap;
+    private double averageWeightedFurtherJoinGap;
+
+    private double averageWeightedLength;
 
     public FloorSolution(FloorSolution floorSolution) {
         super(floorSolution);
@@ -84,13 +88,28 @@ public class FloorSolution extends Solution<Plank> {
 
     private void evaluatePlanks() {
         int currentRow = 0;
+        double currentRowMidPoint = 0.5 * plankWidth;
         int currentRowLength = 0;
+        double horizontalMidpoint = floorLength / 2;
+        double verticalMidpoint = floorWidth / 2;
+        double pythagMidpoint = Math.sqrt(horizontalMidpoint*horizontalMidpoint+verticalMidpoint*verticalMidpoint);
+
+        double totalWeight = 0;
+
         for (int i = 0; i < size(); i++) {
             Plank plank = get(i);
             if (currentRow >= rows) {
                 surplusLength += plank.getLength();
                 surplusPlanks++;
             } else {
+                double horizontalDistance = Math.abs(horizontalMidpoint - (currentRowLength + 0.5 * plank.getLength()));
+
+                double verticalDistance = Math.abs(verticalMidpoint - currentRowMidPoint);
+
+                double pythagDistance = Math.sqrt(horizontalDistance*horizontalDistance+verticalDistance*verticalDistance);
+
+                totalWeight += plank.getLength() * plank.getLength() / maxPlankLength * pythagDistance/pythagMidpoint;
+
                 currentRowLength += plank.getLength();
                 if (currentRowLength > longestLength) {
                     longestLength = currentRowLength;
@@ -101,6 +120,7 @@ public class FloorSolution extends Solution<Plank> {
                     rowWaste[currentRow] += waste;
                     totalWaste += waste;
                     currentRow++;
+                    currentRowMidPoint += plankWidth;
                     rowOffsets[currentRow] = i+1;
                     currentRowLength = 0;
                 }
@@ -110,23 +130,35 @@ public class FloorSolution extends Solution<Plank> {
             surplusLength += currentRowLength - floorLength;
             currentRowLength = 0;
         }
+
+        averageWeightedLength = totalWeight / planksUsed;
     }
 
     private void evaluateJoinGaps() {
         int plankNum = 0;
         minJoinGap = Integer.MAX_VALUE;
         double totalWeightedJoinGap = 0;
+        double totalWeightedFurtherJoinGap = 0;
+        int furtherCount = 0;
+
         long totalJoinGap = 0;
         int count = 0;
         for (int row = 0; row < rows-1 && rowOffsets[row+2] > 0; row++) {
             int rowDistance = 0;
             for (; plankNum < rowOffsets[row+1]-1; plankNum++) {
                 rowDistance += get(plankNum).getLength();
-                int distance = getDistanceToEndClosestBelowGap(row, rowDistance);
+                int distance = getDistanceToEndClosestBelowGap(row+1, rowDistance);
 
                 totalJoinGap += distance;
                 double weightedGap = (double) maxPlankLength / Math.max(distance, 0.5);
                 totalWeightedJoinGap += weightedGap * weightedGap;
+
+                if (row < rows-2 && rowOffsets[row+3] > 0) {
+                    int furtherDistance = getDistanceToEndClosestBelowGap(row+2, rowDistance);
+                    weightedGap = (double) maxPlankLength / Math.max(furtherDistance, 0.5);
+                    totalWeightedFurtherJoinGap += weightedGap * weightedGap;
+                    furtherCount++;
+                }
 
                 count++;
                 if (distance < minJoinGap) {
@@ -140,6 +172,7 @@ public class FloorSolution extends Solution<Plank> {
         }
         averageJoinGap = (double)totalJoinGap / count;
         averageWeightedJoinGap = totalWeightedJoinGap / count;
+        averageWeightedFurtherJoinGap = totalWeightedFurtherJoinGap / furtherCount;
     }
 
     public int getPlankWidth() {
@@ -196,15 +229,17 @@ public class FloorSolution extends Solution<Plank> {
 
     @Override
     public String toString() {
-        return "FloorSolution{" +
-                "surplusPlanks=" + surplusPlanks +
-                ", totalWaste=" + totalWaste +
-                ", planksUsed=" + planksUsed +
-                ", surplusLength=" + surplusLength +
-                ", minJoinGap=" + minJoinGap +
-                ", minJoinGapCount=" + minJoinGapCount +
-                ", averageWeightedJoinGap=" + twoSf(averageWeightedJoinGap) +
-                ", averageJoinGap=" + twoSf(averageJoinGap) +
+        return "FS{" +
+                "surpPs=" + surplusPlanks +
+                ", waste=" + totalWaste +
+                ", planks=" + planksUsed +
+                ", surpL=" + surplusLength +
+                ", wL="+twoSf(averageWeightedLength)+
+                ", minGap=" + minJoinGap +
+                ", minGapC=" + minJoinGapCount +
+                ", avWGap=" + twoSf(averageWeightedJoinGap) +
+                ", avGap=" + twoSf(averageJoinGap) +
+                ", avWFGap=" + twoSf(averageWeightedFurtherJoinGap) +
                 '}';
     }
 
@@ -221,6 +256,10 @@ public class FloorSolution extends Solution<Plank> {
         return minJoinGapCount;
     }
 
+    public double getAverageWeightedLength() {
+        return averageWeightedLength;
+    }
+
     public double getAverageDistanceToClosestGap() {
         return averageJoinGap;
     }
@@ -229,8 +268,12 @@ public class FloorSolution extends Solution<Plank> {
         return averageWeightedJoinGap;
     }
 
-    public int getDistanceToEndClosestBelowGap(int row, int distanceToPlankEnd) {
-        int nextRow = row+1;
+    public double getAverageWeightedDistanceToClosestFurtherGap() {
+        return averageWeightedFurtherJoinGap;
+    }
+
+
+    public int getDistanceToEndClosestBelowGap(int nextRow, int distanceToPlankEnd) {
         if (nextRow >= rows) {
             throw new IllegalArgumentException("Must not be called for end row");
         }
@@ -262,11 +305,12 @@ public class FloorSolution extends Solution<Plank> {
         BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
         Graphics2D graphics = result.createGraphics();
         graphics.setBackground(Color.WHITE);
-        graphics.setColor(Color.GRAY);
         graphics.setStroke(new BasicStroke(4));
         graphics.clearRect(0, 0, width, height);
         double plankHeight = yMultiple * plankWidth;
-        for (int i = 0; i < rows; i++) {
+        graphics.setFont(new Font("Arial", Font.PLAIN, (int)Math.round(plankHeight*0.95)));
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        for (int i = 0; i < rows && (i == 0 || rowOffsets[i]>0); i++) {
             int yFrom = (int)Math.round(plankHeight * i);
             int yTo = (int)Math.round(plankHeight * i + plankHeight);
             double xFrom = 0;
@@ -277,7 +321,17 @@ public class FloorSolution extends Solution<Plank> {
             for (int j = rowOffsets[i]; j < rowEnd; j++) {
                 Plank p = get(j);
                 double xTo = xFrom + xMultiple*p.getLength();
+
+                float plankLengthFraction = (float)p.getLength() / maxPlankLength;
+                float brightness = plankLengthFraction*0.3f + 0.35f;
+
+                graphics.setBackground(Color.getHSBColor(plankLengthFraction, 0.3f, brightness));
+                graphics.clearRect((int) xFrom, yFrom, (int) xTo - (int) xFrom, yTo - yFrom);
+                graphics.setColor(Color.DARK_GRAY);
                 graphics.drawRect((int) xFrom, yFrom, (int) xTo - (int) xFrom, yTo - yFrom);
+
+                graphics.setColor(Color.LIGHT_GRAY);
+                drawCenteredString(String.valueOf(p.getLength()), (int)Math.round(xFrom + xMultiple*p.getLength()*0.5), (int)Math.round(yTo-plankHeight*0.5), graphics);
                 xFrom=xTo;
             }
         }
@@ -287,6 +341,13 @@ public class FloorSolution extends Solution<Plank> {
         graphics.dispose();
         return result;
     }
+
+
+    private void drawCenteredString(String s, int x, int y, Graphics g) {
+        FontMetrics fm = g.getFontMetrics();
+        g.drawString(s, x - fm.stringWidth(s) / 2, fm.getAscent() + y - (fm.getAscent() + fm.getDescent()) / 2);
+    }
+
 
     public int getFullRows() {
         int result = rows;
@@ -332,5 +393,10 @@ public class FloorSolution extends Solution<Plank> {
             result.append(get(i).getLength());
         }
         return result.toString();
+    }
+
+    @Override
+    public void preEvaluate() {
+        evaluate();
     }
 }

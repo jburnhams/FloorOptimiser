@@ -17,8 +17,13 @@ public class StringOptimiserTest {
 
     private Configuration configuration = new Configuration() {
         @Override
-        public int getMaxIterations() {
+        public long getMaxIterations() {
             return 1000;
+        }
+
+        @Override
+        public int getThreads() {
+            return 2;
         }
 
         public double getStartingTemperature() {
