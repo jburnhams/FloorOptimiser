@@ -30,6 +30,8 @@ public class SimulatedAnnealing<T, U extends Solution<T>> extends Optimiser<T, U
         double maxCost = currentCost;
         double bestCost = currentCost;
 
+        long logEvery = Math.max(1, maxIterations/1000);
+
         for (long i = 0; i < maxIterations; i++) {
             U neighbour = getNeighbour(current);
             double neighbourCost = evaluate(neighbour);
@@ -37,7 +39,7 @@ public class SimulatedAnnealing<T, U extends Solution<T>> extends Optimiser<T, U
                 maxCost = neighbourCost;
             }
             boolean accepted = isAccepted(startingTemperature, temperature, currentCost, maxCost, neighbourCost);
-            if (i % 1000 == 0 || i == configuration.getMaxIterations()-1) {
+            if (i % logEvery == 0 || i == configuration.getMaxIterations()-1) {
                 logger.info("Run: "+i+", Temp: "+twoSf(temperature)+", Current: "+twoSf(currentCost)+", Neighbour: "+twoSf(neighbourCost)+", Accepted: "+accepted+", Best: "+twoSf(bestCost)+", "+best);
             }
             if (accepted) {

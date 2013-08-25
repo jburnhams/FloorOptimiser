@@ -6,6 +6,8 @@ import org.burnhams.optimiser.Solution;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -429,5 +431,55 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
 
     public Floor getFloor() {
         return floor;
+    }
+
+    private void writePlankTypesCount(PrintStream out, String title, Map<Plank, Integer> plankTypesSpare) {
+        out.println();
+        out.println(title);
+        for (Map.Entry<Plank, Integer> entry : plankTypesSpare.entrySet()) {
+            out.print(entry.getKey().getLength());
+            out.print("=");
+            out.println(entry.getValue());
+        }
+    }
+
+    public void saveToFile(String filename) throws IOException {
+        PrintStream out = null;
+        try {
+            out = new PrintStream(new FileOutputStream(filename));
+            out.println(this.getLengthsList());
+            writePlankTypesCount(out, "Planks Used", getPlankTypesUsed());
+            writePlankTypesCount(out, "Planks Spare", getPlankTypesSpare());
+            out.println();
+            out.println("Row Waste");
+            for (int i = 0; i<rows; i++) {
+                out.println(get(rowOffsets[i+1]-1).getLength()+"="+rowWaste[i]);
+            }
+        }
+        finally {
+            if (out != null) out.close();
+        }
+
+    }
+
+    public static FloorSolution loadFromFile(Floor floor, int plankWidth, String filename) throws IOException {
+        BufferedReader br = new BufferedReader(new FileReader(filename));
+        String line;
+        List<Plank> planks = new ArrayList<>();
+        try {
+            while ((line = br.readLine()) != null) {
+                if (line.isEmpty()) {
+                    break;
+                }
+                String[] parts = line.split(",");
+                for (String p : parts) {
+                    int length = Integer.valueOf(p.trim());
+                    planks.add(new Plank(plankWidth, length));
+                }
+            }
+        } finally {
+            br.close();
+        }
+        return new FloorSolution(planks, floor);
     }
 }

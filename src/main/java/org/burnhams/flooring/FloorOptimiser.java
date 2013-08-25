@@ -8,6 +8,7 @@ import org.burnhams.optimiser.algorithms.HillClimber;
 import org.burnhams.optimiser.algorithms.Optimiser;
 import org.burnhams.optimiser.algorithms.SimulatedAnnealing;
 import org.burnhams.optimiser.neighbourhood.NeighbourhoodFunction;
+import org.burnhams.optimiser.neighbourhood.RandomSwapMultiNeighbour;
 import org.burnhams.optimiser.neighbourhood.RandomSwapNeighbour;
 import org.burnhams.optimiser.neighbourhood.ShuffleNeighbour;
 
@@ -65,7 +66,9 @@ public class FloorOptimiser {
         try {
             Thread.sleep(1);
         } catch (InterruptedException e) {}
-        return new NeighbourhoodFunction[]{new RandomSwapNeighbour<Plank, FloorSolution>(configuration),
+        return new NeighbourhoodFunction[]{
+                new RandomSwapMultiNeighbour<Plank, FloorSolution>(configuration),
+                new RandomSwapNeighbour<Plank, FloorSolution>(configuration),
                 new WithinRowSwapNeighbour(configuration),
                 new RowSwapNeighbour(configuration)};
     }

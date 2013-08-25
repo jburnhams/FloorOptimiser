@@ -134,4 +134,15 @@ public class FloorSolutionTest {
         ImageIO.write(image, "PNG", new File("testmultilengthfloor.png"));
     }
 
+
+    @Test
+    public void shouldSaveAndLoad() throws IOException {
+        FloorSolution solution = new FloorSolution(rectangularFloor, PLANK_WIDTH, PLANKS);
+        solution.evaluate();
+        String filename = "testsolution.csv";
+        solution.saveToFile(filename);
+        FloorSolution loaded = FloorSolution.loadFromFile(rectangularFloor, PLANK_WIDTH, filename);
+        assertThat(loaded).isEqualTo(solution);
+    }
+
 }
