@@ -1,10 +1,12 @@
 package org.burnhams.flooring;
 
+import org.burnhams.flooring.floors.Floor;
 import org.burnhams.optimiser.PreEvaluatable;
 import org.burnhams.optimiser.Solution;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,9 +14,10 @@ import static org.burnhams.utils.StringUtils.twoSf;
 
 public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
 
+    private final Floor floor;
+
     private final int plankWidth;
-    private final int floorWidth;
-    private final int floorLength;
+
     private final int rows;
     private final int maxPlankLength;
 
@@ -35,31 +38,32 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
 
     private double averageWeightedLength;
 
+    private Map<Plank, Integer> plankTypesUsed;
+    private Map<Plank, Integer> plankTypesSpare;
+
     public FloorSolution(FloorSolution floorSolution) {
         super(floorSolution);
         plankWidth = floorSolution.getPlankWidth();
-        floorWidth = floorSolution.getFloorWidth();
-        floorLength = floorSolution.getFloorLength();
+        floor = floorSolution.getFloor();
         longestLength = floorSolution.getAreaLength();
         rows = floorSolution.getRows();
         maxPlankLength = floorSolution.getMaxPlankLength();
     }
 
-    public FloorSolution(int floorWidth, int floorLength, int plankWidth, int... plankLengths) {
-        this(Plank.createPlanks(plankWidth, plankLengths), floorWidth, floorLength);
+    public FloorSolution(Floor floor, int plankWidth, int... plankLengths) {
+        this(Plank.createPlanks(plankWidth, plankLengths), floor);
     }
 
-    public FloorSolution(int floorWidth, int floorLength, int plankWidth, Map<Integer, Integer> plankLengths) {
-        this(Plank.createPlanks(plankWidth, plankLengths), floorWidth, floorLength);
+    public FloorSolution(Floor floor, int plankWidth, Map<Integer, Integer> plankLengths) {
+        this(Plank.createPlanks(plankWidth, plankLengths), floor);
     }
 
-    public FloorSolution(List<Plank> planks, int floorWidth, int floorLength) {
+    public FloorSolution(List<Plank> planks, Floor floor) {
         super(planks);
-        this.floorLength = floorLength;
-        this.floorWidth = floorWidth;
-        longestLength = floorLength;
+        this.floor = floor;
+        longestLength = floor.getMaxLength();
         plankWidth = planks.get(0).getWidth();
-        rows = (int)Math.ceil((double)floorWidth / plankWidth);
+        rows = (int)Math.ceil((double)floor.getWidth() / plankWidth);
         int maxLength = 0;
         for (Plank p : planks) {
             if (p.getLength() > maxLength) {
@@ -78,7 +82,7 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
         surplusLength = 0;
         surplusPlanks = 0;
         totalWaste = 0;
-        longestLength = floorLength;
+        longestLength = floor.getMaxLength();
 
         evaluatePlanks();
         evaluateJoinGaps();
@@ -86,49 +90,72 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
         hasChanged = false;
     }
 
+    private void incrementPlankMap(Map<Plank, Integer> map, Plank plank) {
+        Integer existing = map.get(plank);
+        map.put(plank, existing == null ? 1 : (existing+1));
+    }
+
     private void evaluatePlanks() {
         int currentRow = 0;
-        double currentRowMidPoint = 0.5 * plankWidth;
+
+        int currentRowStartOffset = 0;
+        double currentRowMidOffset = 0.5d * plankWidth;
+        int currentRowEndOffset = currentRowStartOffset+plankWidth;
+        int currentRowMaxLength = floor.getLength(currentRowStartOffset, currentRowEndOffset);
+
         int currentRowLength = 0;
-        double horizontalMidpoint = floorLength / 2;
-        double verticalMidpoint = floorWidth / 2;
+        double horizontalMidpoint = 0.5d * floor.getMaxLength();
+        double verticalMidpoint = 0.5d * floor.getWidth();
         double pythagMidpoint = Math.sqrt(horizontalMidpoint*horizontalMidpoint+verticalMidpoint*verticalMidpoint);
 
         double totalWeight = 0;
+
+        plankTypesUsed = new HashMap<>();
+        plankTypesSpare = new HashMap<>();
 
         for (int i = 0; i < size(); i++) {
             Plank plank = get(i);
             if (currentRow >= rows) {
                 surplusLength += plank.getLength();
                 surplusPlanks++;
+                incrementPlankMap(plankTypesSpare, plank);
             } else {
                 double horizontalDistance = Math.abs(horizontalMidpoint - (currentRowLength + 0.5 * plank.getLength()));
 
-                double verticalDistance = Math.abs(verticalMidpoint - currentRowMidPoint);
+                double verticalDistance = Math.abs(verticalMidpoint - currentRowMidOffset);
 
                 double pythagDistance = Math.sqrt(horizontalDistance*horizontalDistance+verticalDistance*verticalDistance);
 
-                totalWeight += plank.getLength() * plank.getLength() / maxPlankLength * pythagDistance/pythagMidpoint;
+                totalWeight += (double)plank.getLength() * plank.getLength() / maxPlankLength * pythagDistance/pythagMidpoint;
 
                 currentRowLength += plank.getLength();
                 if (currentRowLength > longestLength) {
                     longestLength = currentRowLength;
                 }
+                incrementPlankMap(plankTypesUsed, plank);
                 planksUsed++;
-                if (currentRowLength >= this.floorLength) {
-                    int waste = currentRowLength - floorLength;
+                if (currentRowLength >= currentRowMaxLength) {
+                    int waste = currentRowLength - currentRowMaxLength;
                     rowWaste[currentRow] += waste;
                     totalWaste += waste;
                     currentRow++;
-                    currentRowMidPoint += plankWidth;
+
+                    currentRowMidOffset += plankWidth;
+                    currentRowStartOffset += plankWidth;
+                    currentRowEndOffset += plankWidth;
+                    currentRowMaxLength = floor.getLength(currentRowStartOffset, currentRowEndOffset);
+
                     rowOffsets[currentRow] = i+1;
                     currentRowLength = 0;
                 }
             }
         }
         for (; currentRow < rows; currentRow++) {
-            surplusLength += currentRowLength - floorLength;
+            surplusLength += currentRowLength - currentRowMaxLength;
             currentRowLength = 0;
+            currentRowStartOffset += plankWidth;
+            currentRowEndOffset += plankWidth;
+            currentRowMaxLength = floor.getLength(currentRowStartOffset, currentRowEndOffset);
         }
 
         averageWeightedLength = totalWeight / planksUsed;
@@ -177,14 +204,6 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
 
     public int getPlankWidth() {
         return plankWidth;
-    }
-
-    public int getFloorWidth() {
-        return floorWidth;
-    }
-
-    public int getFloorLength() {
-        return floorLength;
     }
 
     public int getRows() {
@@ -281,7 +300,7 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
             throw new IllegalArgumentException("Must not be called for last complete row");
         }
         int offset = rowOffsets[nextRow];
-        if (distanceToPlankEnd >= floorLength) {
+        if (distanceToPlankEnd >= floor.getMaxLength()) {
             throw new IllegalArgumentException("Must not be called for end plank");
         }
         int currentDistance = -1;
@@ -337,7 +356,7 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
         }
         graphics.setStroke(new BasicStroke(3));
         graphics.setColor(Color.BLACK);
-        graphics.drawRect(0,0,(int)Math.round(xMultiple*floorLength), (int)Math.round(yMultiple*floorWidth));
+        floor.drawBoundary(graphics, xMultiple, yMultiple);
         graphics.dispose();
         return result;
     }
@@ -369,6 +388,14 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
         return maxPlankLength;
     }
 
+    public Map<Plank, Integer> getPlankTypesUsed() {
+        return plankTypesUsed;
+    }
+
+    public Map<Plank, Integer> getPlankTypesSpare() {
+        return plankTypesSpare;
+    }
+
     public FloorSolution swapRows(int row1, int row2) {
         FloorSolution result = clone();
         int rowEnd2 = rowOffsets[row2 + 1];
@@ -398,5 +425,9 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
     @Override
     public void preEvaluate() {
         evaluate();
+    }
+
+    public Floor getFloor() {
+        return floor;
     }
 }

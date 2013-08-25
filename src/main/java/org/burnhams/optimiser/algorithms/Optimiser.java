@@ -1,6 +1,9 @@
-package org.burnhams.optimiser;
+package org.burnhams.optimiser.algorithms;
 
 import org.apache.log4j.Logger;
+import org.burnhams.optimiser.Configuration;
+import org.burnhams.optimiser.Evaluator;
+import org.burnhams.optimiser.Solution;
 import org.burnhams.optimiser.neighbourhood.NeighbourhoodFunction;
 import org.burnhams.optimiser.neighbourhood.RandomSwapNeighbour;
 

@@ -1,8 +1,12 @@
 package org.burnhams.flooring;
 
+import org.burnhams.flooring.floors.Floor;
+import org.burnhams.flooring.floors.MultiLengthFloor;
+import org.burnhams.flooring.floors.RectangularFloor;
 import org.burnhams.optimiser.Configuration;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -13,7 +17,12 @@ public class PropertiesConfiguration implements Configuration {
 
     public PropertiesConfiguration() throws IOException {
         properties = new Properties();
-        properties.load(getClass().getResourceAsStream("/configuration.properties"));
+        InputStream resource = getClass().getResourceAsStream("/configuration.properties");
+        try {
+            properties.load(resource);
+        } finally {
+            resource.close();
+        }
     }
 
     public int getPlankWidth() {
@@ -21,21 +30,31 @@ public class PropertiesConfiguration implements Configuration {
 
     }
 
-    public int getFloorWidth() {
-        return getInteger("floor.width");
-
-    }
-
-    public int getFloorLength() {
-        return getInteger("floor.length");
+    public Floor getFloor() {
+        int[] widths = getIntegers("floor.widths");
+        int[] lengths = getIntegers("floor.lengths");
+        if (widths.length == 1) {
+            return new RectangularFloor(widths[0], lengths[1]);
+        } else {
+            return new MultiLengthFloor(widths, lengths);
+        }
     }
 
     public int getThreads() {
         return getInteger("threads");
     }
 
-    private Integer getInteger(String key) {
+    private int getInteger(String key) {
         return Integer.valueOf(properties.getProperty(key));
+    }
+
+    private int[] getIntegers(String key) {
+        String[] strings = properties.getProperty(key).split(",");
+        int[] result = new int[strings.length];
+        for (int i = 0; i<strings.length; i++) {
+            result[i] = Integer.valueOf(strings[i].trim());
+        }
+        return result;
     }
 
     private Double getDouble(String key) {

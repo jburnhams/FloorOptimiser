@@ -2,6 +2,9 @@ package org.burnhams.optimiser;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.log4j.Logger;
+import org.burnhams.optimiser.algorithms.HillClimber;
+import org.burnhams.optimiser.algorithms.Optimiser;
+import org.burnhams.optimiser.algorithms.SimulatedAnnealing;
 import org.junit.Test;
 
 import java.util.ArrayList;

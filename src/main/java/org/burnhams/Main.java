@@ -1,9 +1,6 @@
 package org.burnhams;
 
-import org.burnhams.flooring.FloorEvaluator;
-import org.burnhams.flooring.FloorOptimiser;
-import org.burnhams.flooring.FloorSolution;
-import org.burnhams.flooring.PropertiesConfiguration;
+import org.burnhams.flooring.*;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -11,6 +8,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class Main {
@@ -25,9 +23,21 @@ public class Main {
         try {
             out = new PrintStream(new FileOutputStream("solution.csv"));
             out.println(solution.getLengthsList());
+            writePlankTypesCount(out, "Planks Used", solution.getPlankTypesUsed());
+            writePlankTypesCount(out, "Planks Spare", solution.getPlankTypesSpare());
         }
         finally {
             if (out != null) out.close();
+        }
+    }
+
+    private static void writePlankTypesCount(PrintStream out, String title, Map<Plank, Integer> plankTypesSpare) {
+        out.println();
+        out.println(title);
+        for (Map.Entry<Plank, Integer> entry : plankTypesSpare.entrySet()) {
+            out.print(entry.getKey().getLength());
+            out.print("=");
+            out.println(entry.getValue());
         }
     }
 

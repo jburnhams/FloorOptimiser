@@ -4,9 +4,9 @@ import org.apache.log4j.Logger;
 import org.burnhams.flooring.neighbourhood.RowSwapNeighbour;
 import org.burnhams.flooring.neighbourhood.WithinRowSwapNeighbour;
 import org.burnhams.optimiser.Configuration;
-import org.burnhams.optimiser.HillClimber;
-import org.burnhams.optimiser.Optimiser;
-import org.burnhams.optimiser.SimulatedAnnealing;
+import org.burnhams.optimiser.algorithms.HillClimber;
+import org.burnhams.optimiser.algorithms.Optimiser;
+import org.burnhams.optimiser.algorithms.SimulatedAnnealing;
 import org.burnhams.optimiser.neighbourhood.NeighbourhoodFunction;
 import org.burnhams.optimiser.neighbourhood.RandomSwapNeighbour;
 import org.burnhams.optimiser.neighbourhood.ShuffleNeighbour;
@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
-import static org.burnhams.optimiser.Optimiser.getBestFromFutures;
+import static org.burnhams.optimiser.algorithms.Optimiser.getBestFromFutures;
 
 public class FloorOptimiser {
     private static final Logger logger = Logger.getLogger(FloorOptimiser.class);
@@ -31,8 +31,7 @@ public class FloorOptimiser {
 
     public FloorSolution optimise() throws ExecutionException {
         FloorSolution initialSolution = new FloorSolution(
-                configuration.getFloorWidth(), configuration.getFloorLength(),
-                configuration.getPlankWidth(), configuration.getPlankLengths()
+                configuration.getFloor(), configuration.getPlankWidth(), configuration.getPlankLengths()
         );
         initialSolution.shuffle();
         initialSolution.evaluate();
