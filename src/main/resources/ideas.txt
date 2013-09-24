@@ -1,4 +1,2 @@
-gcd doesn't work. bad idea?
-capping max width / length is wrong. how come 0,0 is inclusive but 0,10 is exclusive yet 10 width? is draw boundary also wrong? problem is lines having width
-
-so, should continue to draw outline then fill algorithm for center? Place wood from first horizontal down?
+count segments
+get start / end of segment
