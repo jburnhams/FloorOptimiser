@@ -4,7 +4,11 @@ import org.burnhams.flooring.floors.Floor;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class WallEnclosedFloor implements Floor {
 
@@ -14,22 +18,13 @@ public class WallEnclosedFloor implements Floor {
     private final CornerWallLength[] lengths;
     private final int floorBitsSize;
     private final BitSet floorBits;
+    private final Map<Integer, LengthSegments> rowOffsetLengthSegments = new ConcurrentHashMap<>();
 
     public WallEnclosedFloor(int horizontalLength, CornerWallLength... lengths) {
         this.horizontalLength = horizontalLength;
         this.lengths = lengths;
 
-        final int[] minXYmaxXY = new int[]{0,0,0,0};
-        Utils.traceWalls(0,0, horizontalLength,lengths, new WallTrace() {
-            @Override
-            public void trace(int x1, int y1, int x2, int y2, Direction direction, int length) {
-                if (x2 < minXYmaxXY[0]) minXYmaxXY[0] = x2;
-                if (y2 < minXYmaxXY[1]) minXYmaxXY[1] = y2;
-                if (x2 > minXYmaxXY[2]) minXYmaxXY[2] = x2;
-                if (y2 > minXYmaxXY[3]) minXYmaxXY[3] = y2;
-            }
-        });
-
+        final int[] minXYmaxXY = getMinMaxs(horizontalLength, lengths);
         horizontalLengthOffsetX = -minXYmaxXY[0];
         horizontalLengthOffsetY = -minXYmaxXY[1];
         maxLength = minXYmaxXY[2] - minXYmaxXY[0];
@@ -38,6 +33,20 @@ public class WallEnclosedFloor implements Floor {
         floorBitsSize = maxWidth * maxLength;
         floorBits = new BitSet(floorBitsSize);
         setFloorBits();
+    }
+
+    private static int[] getMinMaxs(int horizontalLength, CornerWallLength[] lengths) {
+        final int[] minXYmaxXY = new int[]{0,0,0,0};
+        Utils.traceWalls(0, 0, horizontalLength, lengths, new WallTrace() {
+            @Override
+            public void trace(int x1, int y1, int x2, int y2, Direction direction, int length) {
+                if (x2 < minXYmaxXY[0]) minXYmaxXY[0] = x2;
+                if (y2 < minXYmaxXY[1]) minXYmaxXY[1] = y2;
+                if (x2 > minXYmaxXY[2]) minXYmaxXY[2] = x2;
+                if (y2 > minXYmaxXY[3]) minXYmaxXY[3] = y2;
+            }
+        });
+        return minXYmaxXY;
     }
 
     private void setFloorBit(int x, int y) {
@@ -107,7 +116,7 @@ public class WallEnclosedFloor implements Floor {
             fillFloorBits(x-1, y);
             fillFloorBits(x, y-1);
             fillFloorBits(x+1, y);
-            fillFloorBits(x, y+1);
+            fillFloorBits(x, y + 1);
             fillFloorBits(x-1, y-1);
             fillFloorBits(x+1, y-1);
             fillFloorBits(x+1, y+1);
@@ -129,14 +138,57 @@ public class WallEnclosedFloor implements Floor {
         return maxLength;
     }
 
+    private BitSet getAggregateLengthBits(int widthStartOffset, int widthEndOffset) {
+        BitSet result = new BitSet(maxLength);
+        for (int x = 0; x < maxLength; x++) {
+            for (int y = widthStartOffset; y < widthEndOffset; y++) {
+                if (getFloorBit(x,y)) {
+                    result.set(x);
+                }
+            }
+        }
+        return result;
+    }
+
+    private LengthSegments getLengthSegments(int widthStartOffset, int widthEndOffset) {
+        LengthSegments result = rowOffsetLengthSegments.get(widthStartOffset);
+        if (result == null) {
+            BitSet aggregate = getAggregateLengthBits(widthStartOffset, widthEndOffset);
+            List<Integer> segmentStartEnds = new ArrayList<>();
+            boolean current = false;
+            for (int x = 0; x < maxLength; x++) {
+                boolean onFloor = aggregate.get(x);
+                if (onFloor != current) {
+                    segmentStartEnds.add(x);
+                    current = onFloor;
+                }
+            }
+            if (current) {
+                segmentStartEnds.add(maxLength);
+            }
+            if (segmentStartEnds.isEmpty()) {
+                segmentStartEnds.add(0);
+                segmentStartEnds.add(0);
+            }
+            result = new LengthSegments(segmentStartEnds);
+            rowOffsetLengthSegments.put(widthStartOffset, result);
+        }
+        return result;
+    }
+
     @Override
     public int getSegments(int widthStartOffset, int widthEndOffset) {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        return getLengthSegments(widthStartOffset, widthEndOffset).getSegments();
+    }
+
+    @Override
+    public int getSegmentStart(int widthStartOffset, int widthEndOffset, int segment) {
+        return getLengthSegments(widthStartOffset, widthEndOffset).getSegmentStart(segment);
     }
 
     @Override
     public int getSegmentLength(int widthStartOffset, int widthEndOffset, int segment) {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        return getLengthSegments(widthStartOffset, widthEndOffset).getSegmentLength(segment);
     }
 
     public int getHorizontalLengthOffsetX() {

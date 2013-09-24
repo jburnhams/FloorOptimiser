@@ -31,6 +31,8 @@ public class WallEnclosedFloorTest {
         assertThat(floor.getHorizontalLengthOffsetX()).isEqualTo(0);
         assertThat(floor.getHorizontalLengthOffsetY()).isEqualTo(10);
         assertThat(floor.getFloorBitsSize()).isEqualTo(100);
+        assertThat(floor.getSegments(0,1)).isEqualTo(1);
+        assertThat(floor.getSegments(0,10)).isEqualTo(1);
     }
 
     @Test
@@ -48,6 +50,30 @@ public class WallEnclosedFloorTest {
         ImageIO.write(result, "PNG", new File("testwallenclosedfloor.png"));
         assertThat(floor.getFloorBit(0,0)).isFalse();
         assertThat(floor.getFloorBit(100,90)).isFalse();
+
+        assertThat(floor.getSegments(0,10)).isEqualTo(1);
+        assertThat(floor.getSegmentLength(0,10,0)).isEqualTo(90);
+        assertThat(floor.getSegmentStart(0,10,0)).isEqualTo(10);
+
+        assertThat(floor.getSegments(40,80)).isEqualTo(1);
+        assertThat(floor.getSegmentLength(40,80,0)).isEqualTo(100);
+        assertThat(floor.getSegmentStart(40,80,0)).isEqualTo(0);
+
+        assertThat(floor.getSegments(60,80)).isEqualTo(2);
+        assertThat(floor.getSegmentLength(60,80,0)).isEqualTo(20);
+        assertThat(floor.getSegmentLength(60,80,1)).isEqualTo(60);
+        assertThat(floor.getSegmentStart(60,80,0)).isEqualTo(0);
+        assertThat(floor.getSegmentStart(60,80,1)).isEqualTo(40);
+
+        assertThat(floor.getSegments(80,100)).isEqualTo(2);
+        assertThat(floor.getSegmentLength(80,100,0)).isEqualTo(10);
+        assertThat(floor.getSegmentLength(80,100,1)).isEqualTo(60);
+        assertThat(floor.getSegmentStart(80,100,0)).isEqualTo(10);
+        assertThat(floor.getSegmentStart(80,100,1)).isEqualTo(40);
+
+        assertThat(floor.getSegments(90,100)).isEqualTo(1);
+        assertThat(floor.getSegmentLength(90,100,0)).isEqualTo(60);
+        assertThat(floor.getSegmentStart(90,100,0)).isEqualTo(40);
     }
 
 

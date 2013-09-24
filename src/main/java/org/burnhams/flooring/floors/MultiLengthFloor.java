@@ -73,6 +73,11 @@ public class MultiLengthFloor implements Floor {
     }
 
     @Override
+    public int getSegmentStart(int widthStartOffset, int widthEndOffset, int segment) {
+        return 0;
+    }
+
+    @Override
     public int getSegmentLength(int widthStartOffset, int widthEndOffset, int segment) {
         int length1 = 0, length2 = 0;
         for (int i = 0; i < count && (length1 == 0 || length2 ==0); i++) {

@@ -25,6 +25,7 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
 
 
     private int[] rowOffsets;
+    private List<Integer>[] rowPlankOffsets;
     private int[] rowWaste;
     private int surplusPlanks;
     private int surplusLength;
@@ -80,6 +81,7 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
             return;
         }
         rowOffsets = new int[rows+1];
+        rowPlankOffsets = new List[rows+1];
         rowWaste = new int[rows];
         surplusLength = 0;
         surplusPlanks = 0;
@@ -99,13 +101,19 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
 
     private void evaluatePlanks() {
         int currentRow = 0;
+        List<Integer> currentRowOffsets = (rowPlankOffsets[currentRow] = new ArrayList<>());
+
 
         int currentRowStartOffset = 0;
         double currentRowMidOffset = 0.5d * plankWidth;
         int currentRowEndOffset = currentRowStartOffset+plankWidth;
-        int currentRowMaxLength = floor.getSegmentLength(currentRowStartOffset, currentRowEndOffset,0);
 
-        int currentRowLength = 0;
+        int currentSegment = 0;
+        int currentRowSegmentCount = floor.getSegments(currentRowStartOffset, currentRowEndOffset);
+        int currentSegmentStart = floor.getSegmentStart(currentRowStartOffset, currentRowEndOffset, currentSegment);
+        int currentSegmentEnd = currentSegmentStart + floor.getSegmentLength(currentRowStartOffset, currentRowEndOffset, currentSegment);
+
+        int nextPlankStart = currentSegmentStart;
         double horizontalMidpoint = 0.5d * floor.getMaxLength();
         double verticalMidpoint = 0.5d * floor.getWidth();
         double pythagMidpoint = Math.sqrt(horizontalMidpoint*horizontalMidpoint+verticalMidpoint*verticalMidpoint);
@@ -122,7 +130,7 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
                 surplusPlanks++;
                 incrementPlankMap(plankTypesSpare, plank);
             } else {
-                double horizontalDistance = Math.abs(horizontalMidpoint - (currentRowLength + 0.5 * plank.getLength()));
+                double horizontalDistance = Math.abs(horizontalMidpoint - (nextPlankStart + 0.5 * plank.getLength()));
 
                 double verticalDistance = Math.abs(verticalMidpoint - currentRowMidOffset);
 
@@ -130,34 +138,64 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
 
                 totalWeight += (double)plank.getLength() * plank.getLength() / maxPlankLength * pythagDistance/pythagMidpoint;
 
-                currentRowLength += plank.getLength();
-                if (currentRowLength > longestLength) {
-                    longestLength = currentRowLength;
+                currentRowOffsets.add(nextPlankStart);
+
+                nextPlankStart += plank.getLength();
+                if (nextPlankStart > longestLength) {
+                    longestLength = nextPlankStart;
                 }
                 incrementPlankMap(plankTypesUsed, plank);
                 planksUsed++;
-                if (currentRowLength >= currentRowMaxLength) {
-                    int waste = currentRowLength - currentRowMaxLength;
+
+
+                if (nextPlankStart >= currentSegmentEnd) {
+                    int waste = nextPlankStart - currentSegmentEnd;
+                    if (currentSegment < currentRowSegmentCount - 1) {
+                        int nextSegmentStart = floor.getSegmentStart(currentRowStartOffset, currentRowEndOffset, currentSegment+1);
+                        if (nextPlankStart > nextSegmentStart) {
+                            waste -= (nextPlankStart - nextSegmentStart);
+                        }
+                    }
                     rowWaste[currentRow] += waste;
                     totalWaste += waste;
-                    currentRow++;
 
-                    currentRowMidOffset += plankWidth;
-                    currentRowStartOffset += plankWidth;
-                    currentRowEndOffset += plankWidth;
-                    currentRowMaxLength = floor.getSegmentLength(currentRowStartOffset, currentRowEndOffset,0);
+                    currentSegment++;
 
-                    rowOffsets[currentRow] = i+1;
-                    currentRowLength = 0;
+                    if (currentSegment >= currentRowSegmentCount) {
+                        currentSegment = 0;
+                        currentRow++;
+                        currentRowOffsets = (rowPlankOffsets[currentRow] = new ArrayList<>());
+
+                        currentRowMidOffset += plankWidth;
+                        currentRowStartOffset += plankWidth;
+                        currentRowEndOffset += plankWidth;
+                        currentRowSegmentCount = floor.getSegments(currentRowStartOffset, currentRowEndOffset);
+                        rowOffsets[currentRow] = i+1;
+                        nextPlankStart = 0;
+                    }
+                    currentSegmentStart = floor.getSegmentStart(currentRowStartOffset, currentRowEndOffset, currentSegment);
+                    currentSegmentEnd = currentSegmentStart + floor.getSegmentLength(currentRowStartOffset, currentRowEndOffset, currentSegment);
+
+                    if (nextPlankStart < currentSegmentStart) {
+                        nextPlankStart = currentSegmentStart;
+                    }
                 }
             }
         }
         for (; currentRow < rows; currentRow++) {
-            surplusLength += currentRowLength - currentRowMaxLength;
-            currentRowLength = 0;
+            currentRowSegmentCount = floor.getSegments(currentRowStartOffset, currentRowEndOffset);
+            for (; currentSegment < currentRowSegmentCount; currentSegment++) {
+                currentSegmentStart = floor.getSegmentStart(currentRowStartOffset, currentRowEndOffset, currentSegment);
+                currentSegmentEnd = currentSegmentStart + floor.getSegmentLength(currentRowStartOffset, currentRowEndOffset, currentSegment);
+                if (nextPlankStart < currentSegmentStart) {
+                    nextPlankStart = currentSegmentStart;
+                }
+                surplusLength += nextPlankStart - currentSegmentEnd;
+            }
+            currentSegment = 0;
+            nextPlankStart = 0;
             currentRowStartOffset += plankWidth;
             currentRowEndOffset += plankWidth;
-            currentRowMaxLength = floor.getSegmentLength(currentRowStartOffset, currentRowEndOffset,0);
         }
 
         averageWeightedLength = totalWeight / planksUsed;
@@ -173,17 +211,18 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
         long totalJoinGap = 0;
         int count = 0;
         for (int row = 0; row < rows-1 && rowOffsets[row+2] > 0; row++) {
-            int rowDistance = 0;
+            List<Integer> plankOffsets = rowPlankOffsets[row];
+            int rowPlank = 0;
             for (; plankNum < rowOffsets[row+1]-1; plankNum++) {
-                rowDistance += get(plankNum).getLength();
-                int distance = getDistanceToEndClosestBelowGap(row+1, rowDistance);
+                int plankEnd = plankOffsets.get(rowPlank) + get(plankNum).getLength();
+                int distance = getDistanceToEndClosestBelowGap(row+1, plankEnd);
 
                 totalJoinGap += distance;
                 double weightedGap = (double) maxPlankLength / Math.max(distance, 0.5);
                 totalWeightedJoinGap += weightedGap * weightedGap;
 
                 if (row < rows-2 && rowOffsets[row+3] > 0) {
-                    int furtherDistance = getDistanceToEndClosestBelowGap(row+2, rowDistance);
+                    int furtherDistance = getDistanceToEndClosestBelowGap(row+2, plankEnd);
                     weightedGap = (double) maxPlankLength / Math.max(furtherDistance, 0.5);
                     totalWeightedFurtherJoinGap += weightedGap * weightedGap;
                     furtherCount++;
@@ -196,6 +235,7 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
                 } else if (distance == minJoinGap) {
                     minJoinGapCount++;
                 }
+                rowPlank++;
             }
             plankNum++;
         }
@@ -305,16 +345,18 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
         if (distanceToPlankEnd >= floor.getMaxLength()) {
             throw new IllegalArgumentException("Must not be called for end plank");
         }
+        List<Integer> plankOffsets = rowPlankOffsets[nextRow];
+        int rowPlank = 0;
         int currentDistance = -1;
-        int nextPlankEnd = 0;
         for (int i = offset; i < rowOffsets[nextRow+1]-1; i++) {
-            nextPlankEnd += get(i).getLength();
-            int nextDistance = Math.abs(nextPlankEnd-distanceToPlankEnd);
+            int plankEnd = plankOffsets.get(rowPlank) + get(i).getLength();
+            int nextDistance = Math.abs(plankEnd-distanceToPlankEnd);
             if (currentDistance >= 0 && nextDistance > currentDistance) {
                 return currentDistance;
             } else {
                 currentDistance = nextDistance;
             }
+            rowPlank++;
         }
         return currentDistance;
     }
@@ -334,13 +376,15 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
         for (int i = 0; i < rows && (i == 0 || rowOffsets[i]>0); i++) {
             int yFrom = (int)Math.round(plankHeight * i);
             int yTo = (int)Math.round(plankHeight * i + plankHeight);
-            double xFrom = 0;
             int rowEnd = rowOffsets[i+1];
             if (rowEnd == 0) {
                 rowEnd = size();
             }
+            int rowPlank = 0;
             for (int j = rowOffsets[i]; j < rowEnd; j++) {
                 Plank p = get(j);
+                int plankStart = rowPlankOffsets[i].get(rowPlank);
+                double xFrom = xMultiple * plankStart;
                 double xTo = xFrom + xMultiple*p.getLength();
 
                 float plankLengthFraction = (float)p.getLength() / maxPlankLength;
@@ -353,7 +397,7 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
 
                 graphics.setColor(Color.LIGHT_GRAY);
                 drawCenteredString(String.valueOf(p.getLength()), (int)Math.round(xFrom + xMultiple*p.getLength()*0.5), (int)Math.round(yTo-plankHeight*0.5), graphics);
-                xFrom=xTo;
+                rowPlank++;
             }
         }
         graphics.setStroke(new BasicStroke(3));

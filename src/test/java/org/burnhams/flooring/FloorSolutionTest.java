@@ -4,6 +4,7 @@ import org.assertj.core.data.Offset;
 import org.burnhams.flooring.floors.Floor;
 import org.burnhams.flooring.floors.MultiLengthFloor;
 import org.burnhams.flooring.floors.RectangularFloor;
+import org.burnhams.flooring.floors.wallenclosed.WallEnclosedFloor;
 import org.junit.Test;
 
 import javax.imageio.ImageIO;
@@ -12,6 +13,8 @@ import java.io.File;
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.burnhams.flooring.floors.wallenclosed.CornerWallLength.left;
+import static org.burnhams.flooring.floors.wallenclosed.CornerWallLength.right;
 
 public class FloorSolutionTest {
 
@@ -132,6 +135,36 @@ public class FloorSolutionTest {
         solution.evaluate();
         BufferedImage image = solution.createImage(2000);
         ImageIO.write(image, "PNG", new File("testmultilengthfloor.png"));
+    }
+
+    @Test
+    public void shouldUseWallEnclosedFloor() throws IOException {
+        WallEnclosedFloor floor = new WallEnclosedFloor(10,
+                right(11),
+                right(3), right(5), left(4), left(4), right(3),
+                right(10));
+
+        FloorSolution solution = new FloorSolution(floor, PLANK_WIDTH, new int[]{8, 3, 6, 5, 8, 6, 2, 2, 5, 9});
+        solution.evaluate();
+        assertThat(solution.getTotalWaste()).isEqualTo(1 + 1 + 4 + 4 + 1 + 2);
+        assertThat(solution.getSurplusLength()).isEqualTo(9);
+        assertThat(solution.getSurplusPlanks()).isEqualTo(1);
+        BufferedImage image = solution.createImage(2000);
+        ImageIO.write(image, "PNG", new File("testwallenclosedfloorsolution.png"));
+    }
+
+    @Test
+    public void shouldUseWallEnclosedFloor2() throws IOException {
+        WallEnclosedFloor floor = new WallEnclosedFloor(10,
+                right(11),
+                right(3), right(5), left(4), left(4), right(3),
+                right(10));
+
+        FloorSolution solution = new FloorSolution(floor, PLANK_WIDTH, new int[]{8, 3, 6, 5, 8, 6});
+        solution.evaluate();
+        assertThat(solution.getTotalWaste()).isEqualTo(1+1+4+4);
+        assertThat(solution.getSurplusLength()).isEqualTo(-3-3);
+        assertThat(solution.getSurplusPlanks()).isEqualTo(0);
     }
 
 
