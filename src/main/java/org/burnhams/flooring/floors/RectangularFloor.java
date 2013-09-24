@@ -22,12 +22,12 @@ public class RectangularFloor implements Floor {
     }
 
     @Override
-    public int getLength(int widthOffset) {
-        return length;
+    public int getSegments(int widthStartOffset, int widthEndOffset) {
+        return 1;
     }
 
     @Override
-    public int getLength(int widthStartOffset, int widthEndOffset) {
+    public int getSegmentLength(int widthStartOffset, int widthEndOffset, int segment) {
         return length;
     }
 

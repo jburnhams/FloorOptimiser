@@ -103,7 +103,7 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
         int currentRowStartOffset = 0;
         double currentRowMidOffset = 0.5d * plankWidth;
         int currentRowEndOffset = currentRowStartOffset+plankWidth;
-        int currentRowMaxLength = floor.getLength(currentRowStartOffset, currentRowEndOffset);
+        int currentRowMaxLength = floor.getSegmentLength(currentRowStartOffset, currentRowEndOffset,0);
 
         int currentRowLength = 0;
         double horizontalMidpoint = 0.5d * floor.getMaxLength();
@@ -145,7 +145,7 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
                     currentRowMidOffset += plankWidth;
                     currentRowStartOffset += plankWidth;
                     currentRowEndOffset += plankWidth;
-                    currentRowMaxLength = floor.getLength(currentRowStartOffset, currentRowEndOffset);
+                    currentRowMaxLength = floor.getSegmentLength(currentRowStartOffset, currentRowEndOffset,0);
 
                     rowOffsets[currentRow] = i+1;
                     currentRowLength = 0;
@@ -157,7 +157,7 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
             currentRowLength = 0;
             currentRowStartOffset += plankWidth;
             currentRowEndOffset += plankWidth;
-            currentRowMaxLength = floor.getLength(currentRowStartOffset, currentRowEndOffset);
+            currentRowMaxLength = floor.getSegmentLength(currentRowStartOffset, currentRowEndOffset,0);
         }
 
         averageWeightedLength = totalWeight / planksUsed;

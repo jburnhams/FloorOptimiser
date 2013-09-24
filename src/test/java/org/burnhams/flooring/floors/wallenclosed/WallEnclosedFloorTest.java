@@ -35,16 +35,19 @@ public class WallEnclosedFloorTest {
 
     @Test
     public void testShouldCalculateMaxWidthHeightOffsets3() throws IOException {
-        WallEnclosedFloor floor = new WallEnclosedFloor(10, right(4), right(5), left(2), left(4), right(4), right(10), right(5), right(1), left(5));
-        assertThat(floor.getMaxLength()).isEqualTo(11);
-        assertThat(floor.getWidth()).isEqualTo(10);
-        assertThat(floor.getHorizontalLengthOffsetX()).isEqualTo(1);
+        WallEnclosedFloor floor = new WallEnclosedFloor(90,
+                right(10), left(10), right(30), right(50), left(20), left(40), right(40),
+                right(60),right(40),left(20),left(30),right(10),right(10),left(10),
+                right(30), right(10), left(50));
+        assertThat(floor.getMaxLength()).isEqualTo(110);
+        assertThat(floor.getWidth()).isEqualTo(100);
+        assertThat(floor.getHorizontalLengthOffsetX()).isEqualTo(10);
         assertThat(floor.getHorizontalLengthOffsetY()).isEqualTo(0);
-        assertThat(floor.getFloorBitsSize()).isEqualTo(110);
+        assertThat(floor.getFloorBitsSize()).isEqualTo(11000);
         BufferedImage result = floor.createImage(1000);
         ImageIO.write(result, "PNG", new File("testwallenclosedfloor.png"));
         assertThat(floor.getFloorBit(0,0)).isFalse();
-        assertThat(floor.getFloorBit(10,9)).isFalse();
+        assertThat(floor.getFloorBit(100,90)).isFalse();
     }
 
 

@@ -8,9 +8,9 @@ public interface Floor {
 
     int getMaxLength();
 
-    int getLength(int widthOffset);
+    int getSegments(int widthStartOffset, int widthEndOffset);
 
-    int getLength(int widthStartOffset, int widthEndOffset);
+    int getSegmentLength(int widthStartOffset, int widthEndOffset, int segment);
 
     void drawBoundary(Graphics graphics, double xMultiple, double yMultiple);
 

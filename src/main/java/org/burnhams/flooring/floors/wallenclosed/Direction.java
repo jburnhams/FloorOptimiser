@@ -8,6 +8,14 @@ public enum Direction {
         return values()[num % 4];
     }
 
+    public boolean isHorizontal() {
+        return this == LEFT || this == RIGHT;
+    }
+
+    public boolean isVertical() {
+        return this == UP || this == DOWN;
+    }
+
     public int[] getNewXY(int x, int y, int length) {
         switch (this) {
             case LEFT:

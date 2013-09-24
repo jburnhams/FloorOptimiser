@@ -10,16 +10,16 @@ public final class Utils {
             public void trace(int x1, int y1, int x2, int y2, Direction direction, int length) {
                 switch (direction) {
                     case LEFT:
-                        for (int x = x1; x > x2; x--) tracer.trace(x,y1);
+                        for (int x = x1; x > x2; x--) tracer.trace(x,y1, direction, x==x1);
                         break;
                     case UP:
-                        for (int y = y1; y > y2; y--) tracer.trace(x1,y);
+                        for (int y = y1; y > y2; y--) tracer.trace(x1,y, direction, y==y1);
                         break;
                     case RIGHT:
-                        for (int x = x1; x < x2; x++) tracer.trace(x,y1);
+                        for (int x = x1; x < x2; x++) tracer.trace(x,y1, direction, x==x1);
                         break;
                     case DOWN:
-                        for (int y = y1; y < y2; y++) tracer.trace(x1,y);
+                        for (int y = y1; y < y2; y++) tracer.trace(x1,y, direction, y==y1);
                         break;
                 }
             }

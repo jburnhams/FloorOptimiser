@@ -68,7 +68,7 @@ public class WallEnclosedFloor implements Floor {
     }
 
     private void traceWalls(WallTrace tracer) {
-        Utils.traceWalls(horizontalLengthOffsetX,horizontalLengthOffsetY, horizontalLength,lengths, tracer);
+        Utils.traceWalls(horizontalLengthOffsetX, horizontalLengthOffsetY, horizontalLength, lengths, tracer);
     }
 
     private void traceWallPoints(WallTracePoint tracer) {
@@ -78,23 +78,27 @@ public class WallEnclosedFloor implements Floor {
     private void setFloorBits() {
         traceWallPoints(new WallTracePoint() {
             @Override
-            public void trace(int x, int y) {
+            public void trace(int x, int y, Direction direction, boolean corner) {
                 setFloorBit(x,y);
             }
         });
         fillFloorBits(horizontalLengthOffsetX + 1, horizontalLengthOffsetY + 1);
         traceWallPoints(new WallTracePoint() {
             @Override
-            public void trace(int x, int y) {
-                if (x > 0 && y > 0 && x < maxLength && y < maxWidth && isRightEdge(x, y)) {
+            public void trace(int x, int y, Direction direction, boolean corner) {
+                if (isRightEdge(x, y, direction, corner) || isBottomEdge(x,y, direction, corner)) {
                     unsetFloorBit(x, y);
                 }
             }
         });
     }
 
-    private boolean isRightEdge(int x, int y) {
-        return getFloorBit(x-1,y) && !getFloorBit(x+1, y);
+    private boolean isBottomEdge(int x, int y, Direction direction, boolean corner) {
+        return y > 0 && y < maxWidth && getFloorBit(x,y-1) && !getFloorBit(x, y+1) && (direction.isHorizontal() || corner);
+    }
+
+    private boolean isRightEdge(int x, int y, Direction direction, boolean corner) {
+        return x > 0 && x < maxLength && getFloorBit(x-1,y) && !getFloorBit(x+1, y) && (direction.isVertical() || corner);
     }
 
     private void fillFloorBits(int x, int y) {
@@ -104,6 +108,10 @@ public class WallEnclosedFloor implements Floor {
             fillFloorBits(x, y-1);
             fillFloorBits(x+1, y);
             fillFloorBits(x, y+1);
+            fillFloorBits(x-1, y-1);
+            fillFloorBits(x+1, y-1);
+            fillFloorBits(x+1, y+1);
+            fillFloorBits(x-1, y+1);
         }
     }
 
@@ -121,22 +129,22 @@ public class WallEnclosedFloor implements Floor {
         return maxLength;
     }
 
+    @Override
+    public int getSegments(int widthStartOffset, int widthEndOffset) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public int getSegmentLength(int widthStartOffset, int widthEndOffset, int segment) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
     public int getHorizontalLengthOffsetX() {
         return horizontalLengthOffsetX;
     }
 
     public int getHorizontalLengthOffsetY() {
         return horizontalLengthOffsetY;
-    }
-
-    @Override
-    public int getLength(int widthOffset) {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public int getLength(int widthStartOffset, int widthEndOffset) {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     private void drawLine(Graphics graphics, double xMultiple, double yMultiple, int x1, int y1, int x2, int y2) {
