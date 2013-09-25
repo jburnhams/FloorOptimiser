@@ -4,6 +4,8 @@ package org.burnhams.flooring.floors;
 import java.awt.*;
 import java.util.Arrays;
 
+import static org.burnhams.utils.GraphicsUtils.drawLine;
+
 public class MultiLengthFloor implements Floor {
 
     private final int totalWidth, maxLength, count;
@@ -58,6 +60,15 @@ public class MultiLengthFloor implements Floor {
     }
 
     @Override
+    public double getArea() {
+        double result = 0;
+        for (int i = 0; i < count; i++) {
+            result += (0.001 * widths[i]) * (0.001 * lengths[i]);
+        }
+        return result;
+    }
+
+    @Override
     public int getWidth() {
         return totalWidth;
     }
@@ -89,10 +100,6 @@ public class MultiLengthFloor implements Floor {
             }
         }
         return Math.max(length1, length2);
-    }
-
-    private void drawLine(Graphics graphics, double xMultiple, double yMultiple, int x1, int y1, int x2, int y2) {
-        graphics.drawLine((int)Math.round(xMultiple*x1), (int)Math.round(yMultiple*y1), (int)Math.round(xMultiple*x2), (int)Math.round(yMultiple*y2));
     }
 
     @Override

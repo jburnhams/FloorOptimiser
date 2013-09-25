@@ -4,6 +4,8 @@ import java.awt.*;
 
 public interface Floor {
 
+    double getArea();
+
     int getWidth();
 
     int getMaxLength();

@@ -1,13 +1,15 @@
 package org.burnhams.flooring.floors.wallenclosed;
 
 import org.burnhams.flooring.floors.Floor;
+import org.burnhams.utils.GraphicsUtils;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.BitSet;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class WallEnclosedFloor implements Floor {
@@ -37,7 +39,7 @@ public class WallEnclosedFloor implements Floor {
 
     private static int[] getMinMaxs(int horizontalLength, CornerWallLength[] lengths) {
         final int[] minXYmaxXY = new int[]{0,0,0,0};
-        Utils.traceWalls(0, 0, horizontalLength, lengths, new WallTrace() {
+        int[] xy = Utils.traceWalls(0, 0, horizontalLength, lengths, new WallTrace() {
             @Override
             public void trace(int x1, int y1, int x2, int y2, Direction direction, int length) {
                 if (x2 < minXYmaxXY[0]) minXYmaxXY[0] = x2;
@@ -46,6 +48,12 @@ public class WallEnclosedFloor implements Floor {
                 if (y2 > minXYmaxXY[3]) minXYmaxXY[3] = y2;
             }
         });
+        if (xy[0] != 0 || xy[1] != 0) {
+            try {
+                saveErrorImage(minXYmaxXY, horizontalLength, lengths);
+            } catch (IOException e) {}
+            throw new IllegalArgumentException("Lengths do not end at start: "+xy[0]+", "+xy[1]);
+        }
         return minXYmaxXY;
     }
 
@@ -111,21 +119,39 @@ public class WallEnclosedFloor implements Floor {
     }
 
     private void fillFloorBits(int x, int y) {
-        if (x >= 0 && y >= 0 && x < maxLength && y < maxWidth && !getFloorBit(x, y)) {
-            setFloorBit(x, y);
-            fillFloorBits(x-1, y);
-            fillFloorBits(x, y-1);
-            fillFloorBits(x+1, y);
-            fillFloorBits(x, y + 1);
-            fillFloorBits(x-1, y-1);
-            fillFloorBits(x+1, y-1);
-            fillFloorBits(x+1, y+1);
-            fillFloorBits(x-1, y+1);
-        }
+        Deque<int[]> queue = new LinkedList<>();
+        queue.add(new int[]{x,y});
+        do {
+            int[] xy = queue.pop();
+            x = xy[0];
+            y = xy[1];
+            if (x >= 0 && y >= 0 && x < maxLength && y < maxWidth && !getFloorBit(x, y)) {
+                setFloorBit(x, y);
+                queue.add(new int[]{x-1, y});
+                queue.add(new int[]{x, y-1});
+                queue.add(new int[]{x+1, y});
+                queue.add(new int[]{x, y + 1});
+                queue.add(new int[]{x-1, y-1});
+                queue.add(new int[]{x+1, y-1});
+                queue.add(new int[]{x+1, y+1});
+                queue.add(new int[]{x-1, y+1});
+            }
+        } while (!queue.isEmpty());
     }
 
     int getFloorBitsSize() {
         return floorBitsSize;
+    }
+
+    @Override
+    public double getArea() {
+        int mms = 0;
+        for (int i = 0; i < floorBitsSize; i++) {
+            if (floorBits.get(i)) {
+                mms++;
+            }
+        }
+        return 0.001 * 0.001 * mms;
     }
 
     @Override
@@ -199,16 +225,12 @@ public class WallEnclosedFloor implements Floor {
         return horizontalLengthOffsetY;
     }
 
-    private void drawLine(Graphics graphics, double xMultiple, double yMultiple, int x1, int y1, int x2, int y2) {
-        graphics.drawLine((int)Math.round(xMultiple*x1), (int)Math.round(yMultiple*y1), (int)Math.round(xMultiple*x2), (int)Math.round(yMultiple*y2));
-    }
-
     @Override
     public void drawBoundary(final Graphics graphics, final double xMultiple, final double yMultiple) {
         traceWalls(new WallTrace() {
             @Override
             public void trace(int x1, int y1, int x2, int y2, Direction direction, int length) {
-                drawLine(graphics, xMultiple, yMultiple, x1, y1, x2, y2);
+                GraphicsUtils.drawLine(graphics, xMultiple, yMultiple, x1, y1, x2, y2);
             }
         });
     }
@@ -217,10 +239,38 @@ public class WallEnclosedFloor implements Floor {
         for (int x = 0; x < maxLength; x++) {
             for (int y = 0; y < maxWidth; y++) {
                 if (getFloorBit(x,y)) {
-                    drawLine(graphics, xMultiple, yMultiple, x, y, x+1,y+1);
+                    GraphicsUtils.drawLine(graphics, xMultiple, yMultiple, x, y, x + 1, y + 1);
                 }
             }
         }
+    }
+
+
+    public static void saveErrorImage(int[] minXYmaxXY, int horizontalLength, CornerWallLength[] lengths) throws IOException {
+        int width = 2000;
+        int horizontalLengthOffsetX = -minXYmaxXY[0];
+        int horizontalLengthOffsetY = -minXYmaxXY[1];
+        int maxLength = minXYmaxXY[2] - minXYmaxXY[0];
+        int maxWidth = minXYmaxXY[3] - minXYmaxXY[1];
+        final double xMultiple = (double)width/maxLength;
+        int height = (int)Math.round(((double)maxWidth/maxLength)*width);
+        final double yMultiple = (double)height/maxWidth;
+        BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
+        final Graphics2D graphics = result.createGraphics();
+        graphics.setBackground(Color.WHITE);
+        graphics.clearRect(0, 0, width, height);
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        graphics.setStroke(new BasicStroke(3));
+        graphics.setColor(Color.BLACK);
+        Utils.traceWalls(horizontalLengthOffsetX, horizontalLengthOffsetY, horizontalLength, lengths, new WallTrace() {
+            @Override
+            public void trace(int x1, int y1, int x2, int y2, Direction direction, int length) {
+                GraphicsUtils.drawLine(graphics, xMultiple, yMultiple, x1, y1, x2, y2);
+            }
+        });
+        graphics.setColor(Color.RED);
+        graphics.dispose();
+        ImageIO.write(result, "PNG", new File("errorwallenclosedfloor.png"));
     }
 
 

@@ -1,1 +1,0 @@
-store plank offsets in int array - size is num planks

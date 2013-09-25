@@ -3,6 +3,8 @@ package org.burnhams.flooring;
 import org.burnhams.flooring.floors.Floor;
 import org.burnhams.flooring.floors.MultiLengthFloor;
 import org.burnhams.flooring.floors.RectangularFloor;
+import org.burnhams.flooring.floors.wallenclosed.CornerWallLength;
+import org.burnhams.flooring.floors.wallenclosed.WallEnclosedFloor;
 import org.burnhams.optimiser.Configuration;
 
 import java.io.IOException;
@@ -30,13 +32,26 @@ public class PropertiesConfiguration implements Configuration {
 
     }
 
-    public Floor getFloor() {
-        int[] widths = getIntegers("floor.widths");
-        int[] lengths = getIntegers("floor.lengths");
-        if (widths.length == 1) {
-            return new RectangularFloor(widths[0], lengths[1]);
+    private WallEnclosedFloor getWallEnclosedFloor() {
+        if (properties.containsKey("floor.horizontalLength")) {
+            return new WallEnclosedFloor(getInteger("floor.horizontalLength"), CornerWallLength.parse(properties.getProperty("floor.walls")));
         } else {
-            return new MultiLengthFloor(widths, lengths);
+            return null;
+        }
+    }
+
+    public Floor getFloor() {
+        WallEnclosedFloor floor = getWallEnclosedFloor();
+        if (floor == null) {
+            int[] widths = getIntegers("floor.widths");
+            int[] lengths = getIntegers("floor.lengths");
+            if (widths.length == 1) {
+                return new RectangularFloor(widths[0], lengths[1]);
+            } else {
+                return new MultiLengthFloor(widths, lengths);
+            }
+        } else {
+            return floor;
         }
     }
 

@@ -26,16 +26,14 @@ public final class Utils {
         });
     }
 
-    public static void traceWalls(int x, int y, int horizontalLength, CornerWallLength[] lengths, WallTrace tracer) {
+    public static int[] traceWalls(int x, int y, int horizontalLength, CornerWallLength[] lengths, WallTrace tracer) {
         Direction direction = Direction.RIGHT;
         int[] xy = trace(new int[]{x,y},direction,horizontalLength,tracer);
         for (CornerWallLength cornerWallLength : lengths) {
             direction = direction.turn(cornerWallLength.getDirection());
             xy = trace(xy, direction, cornerWallLength.getLength(), tracer);
         }
-        if (xy[0]!=x || xy[1]!=y) {
-            throw new IllegalArgumentException("Lengths do not end at start: "+xy[0]+", "+xy[1]);
-        }
+        return xy;
     }
 
     private static int[] trace(int[] xy, Direction direction, int length, WallTrace tracer) {

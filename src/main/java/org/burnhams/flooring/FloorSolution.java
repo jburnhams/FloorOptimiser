@@ -25,7 +25,7 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
 
 
     private int[] rowOffsets;
-    private List<Integer>[] rowPlankOffsets;
+    private int[] plankOffsets;
     private int[] rowWaste;
     private int surplusPlanks;
     private int surplusLength;
@@ -81,7 +81,7 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
             return;
         }
         rowOffsets = new int[rows+1];
-        rowPlankOffsets = new List[rows+1];
+        plankOffsets = new int[super.size()];
         rowWaste = new int[rows];
         surplusLength = 0;
         surplusPlanks = 0;
@@ -101,8 +101,6 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
 
     private void evaluatePlanks() {
         int currentRow = 0;
-        List<Integer> currentRowOffsets = (rowPlankOffsets[currentRow] = new ArrayList<>());
-
 
         int currentRowStartOffset = 0;
         double currentRowMidOffset = 0.5d * plankWidth;
@@ -138,7 +136,7 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
 
                 totalWeight += (double)plank.getLength() * plank.getLength() / maxPlankLength * pythagDistance/pythagMidpoint;
 
-                currentRowOffsets.add(nextPlankStart);
+                plankOffsets[i] = nextPlankStart;
 
                 nextPlankStart += plank.getLength();
                 if (nextPlankStart > longestLength) {
@@ -164,7 +162,6 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
                     if (currentSegment >= currentRowSegmentCount) {
                         currentSegment = 0;
                         currentRow++;
-                        currentRowOffsets = (rowPlankOffsets[currentRow] = new ArrayList<>());
 
                         currentRowMidOffset += plankWidth;
                         currentRowStartOffset += plankWidth;
@@ -211,10 +208,8 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
         long totalJoinGap = 0;
         int count = 0;
         for (int row = 0; row < rows-1 && rowOffsets[row+2] > 0; row++) {
-            List<Integer> plankOffsets = rowPlankOffsets[row];
-            int rowPlank = 0;
             for (; plankNum < rowOffsets[row+1]-1; plankNum++) {
-                int plankEnd = plankOffsets.get(rowPlank) + get(plankNum).getLength();
+                int plankEnd = plankOffsets[plankNum] + get(plankNum).getLength();
                 int distance = getDistanceToEndClosestBelowGap(row+1, plankEnd);
 
                 totalJoinGap += distance;
@@ -235,7 +230,6 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
                 } else if (distance == minJoinGap) {
                     minJoinGapCount++;
                 }
-                rowPlank++;
             }
             plankNum++;
         }
@@ -345,18 +339,15 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
         if (distanceToPlankEnd >= floor.getMaxLength()) {
             throw new IllegalArgumentException("Must not be called for end plank");
         }
-        List<Integer> plankOffsets = rowPlankOffsets[nextRow];
-        int rowPlank = 0;
         int currentDistance = -1;
         for (int i = offset; i < rowOffsets[nextRow+1]-1; i++) {
-            int plankEnd = plankOffsets.get(rowPlank) + get(i).getLength();
+            int plankEnd = plankOffsets[i] + get(i).getLength();
             int nextDistance = Math.abs(plankEnd-distanceToPlankEnd);
             if (currentDistance >= 0 && nextDistance > currentDistance) {
                 return currentDistance;
             } else {
                 currentDistance = nextDistance;
             }
-            rowPlank++;
         }
         return currentDistance;
     }
@@ -380,11 +371,9 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
             if (rowEnd == 0) {
                 rowEnd = size();
             }
-            int rowPlank = 0;
             for (int j = rowOffsets[i]; j < rowEnd; j++) {
                 Plank p = get(j);
-                int plankStart = rowPlankOffsets[i].get(rowPlank);
-                double xFrom = xMultiple * plankStart;
+                double xFrom = xMultiple * plankOffsets[j];
                 double xTo = xFrom + xMultiple*p.getLength();
 
                 float plankLengthFraction = (float)p.getLength() / maxPlankLength;
@@ -397,7 +386,6 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
 
                 graphics.setColor(Color.LIGHT_GRAY);
                 drawCenteredString(String.valueOf(p.getLength()), (int)Math.round(xFrom + xMultiple*p.getLength()*0.5), (int)Math.round(yTo-plankHeight*0.5), graphics);
-                rowPlank++;
             }
         }
         graphics.setStroke(new BasicStroke(3));
@@ -497,7 +485,10 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
             out.println();
             out.println("Row Waste");
             for (int i = 0; i<rows; i++) {
-                out.println(get(rowOffsets[i+1]-1).getLength()+"="+rowWaste[i]);
+                int plank = rowOffsets[i + 1] - 1;
+                if (plank >= 0) {
+                    out.println(get(plank).getLength()+"="+rowWaste[i]);
+                }
             }
         }
         finally {

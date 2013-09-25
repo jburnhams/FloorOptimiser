@@ -24,6 +24,7 @@ public class FloorSolutionTest {
 
     @Test
     public void shouldCalculateRows() {
+        assertThat(rectangularFloor.getArea()).isEqualTo(0.01*0.01);
         FloorSolution solution = new FloorSolution(rectangularFloor, PLANK_WIDTH, 8);
         assertThat(solution.getRows()).isEqualTo(4);
         assertThat(solution.size()).isEqualTo(1);

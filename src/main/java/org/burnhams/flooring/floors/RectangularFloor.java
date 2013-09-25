@@ -12,6 +12,11 @@ public class RectangularFloor implements Floor {
     }
 
     @Override
+    public double getArea() {
+        return (0.001 * width) * (0.001 * length);
+    }
+
+    @Override
     public int getWidth() {
         return width;
     }

@@ -1,6 +1,7 @@
 package org.burnhams.flooring;
 
 import org.apache.log4j.Logger;
+import org.burnhams.flooring.floors.Floor;
 import org.burnhams.flooring.neighbourhood.RowSwapNeighbour;
 import org.burnhams.flooring.neighbourhood.WithinRowSwapNeighbour;
 import org.burnhams.optimiser.Configuration;
@@ -31,9 +32,11 @@ public class FloorOptimiser {
 
 
     public FloorSolution optimise() throws ExecutionException {
+        Floor floor = configuration.getFloor();
         FloorSolution initialSolution = new FloorSolution(
-                configuration.getFloor(), configuration.getPlankWidth(), configuration.getPlankLengths()
+                floor, configuration.getPlankWidth(), configuration.getPlankLengths()
         );
+        logger.info("Floor: "+floor.getWidth()+"x"+floor.getMaxLength()+" = "+floor.getArea()+"m2");
         initialSolution.shuffle();
         initialSolution.evaluate();
         Optimiser<Plank, FloorSolution> optimiser;
