@@ -46,7 +46,7 @@ public class FloorSolutionTest {
         assertThat(solution.getSurplusPlanks()).isEqualTo(0);
         assertThat(solution.getPlanksUsed()).isEqualTo(1);
         assertThat(solution.getRowOffsets()).isEqualTo(new int[]{0,0,0,0,0});
-        assertThat(solution.getRowWaste()).isEqualTo(new int[]{0,0,0,0});
+        assertThat(solution.getSegmentWaste()).isEmpty();
         assertThat(solution.getAreaLength()).isEqualTo(10);
         assertThat(solution.getAreaWidth()).isEqualTo(12);
         assertThat(solution.getTotalWaste()).isEqualTo(0);
@@ -61,7 +61,7 @@ public class FloorSolutionTest {
         assertThat(solution.isEvaluated()).isTrue();
         assertThat(solution.getPlanksUsed()).isEqualTo(9);
         assertThat(solution.getRowOffsets()).isEqualTo(new int[]{0, 2, 4, 7, 9});
-        assertThat(solution.getRowWaste()).isEqualTo(new int[]{1,1,1,3});
+        assertThat(solution.getSegmentWaste()).containsExactly(1,1,1,3);
         assertThat(solution.getTotalWaste()).isEqualTo(6);
         assertThat(solution.getSurplusLength()).isEqualTo(9);
         assertThat(solution.getAreaLength()).isEqualTo(13);

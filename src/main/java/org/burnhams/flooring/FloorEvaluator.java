@@ -18,7 +18,7 @@ public class FloorEvaluator implements Evaluator<Plank, FloorSolution> {
 
         cost += ((double)solution.getMaxPlankLength() / Math.max(0.5, solution.getDistanceToClosestGap())) * 200;
 
-        cost += solution.getAverageWeightedLength()*20;
+        //cost += solution.getAverageWeightedLength()*20;
         return cost;
     }
 }

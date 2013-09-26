@@ -26,7 +26,8 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
 
     private int[] rowOffsets;
     private int[] plankOffsets;
-    private int[] rowWaste;
+    private List<Integer> segmentWaste;
+    private List<Plank> segmentWastePlanks;
     private int surplusPlanks;
     private int surplusLength;
     private int totalWaste;
@@ -82,7 +83,8 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
         }
         rowOffsets = new int[rows+1];
         plankOffsets = new int[super.size()];
-        rowWaste = new int[rows];
+        segmentWaste = new ArrayList<>();
+        segmentWastePlanks = new ArrayList<>();
         surplusLength = 0;
         surplusPlanks = 0;
         totalWaste = 0;
@@ -154,7 +156,8 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
                             waste -= (nextPlankStart - nextSegmentStart);
                         }
                     }
-                    rowWaste[currentRow] += waste;
+                    segmentWaste.add(waste);
+                    segmentWastePlanks.add(plank);
                     totalWaste += waste;
 
                     currentSegment++;
@@ -252,10 +255,6 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
 
     int[] getRowOffsets() {
         return rowOffsets;
-    }
-
-    public int[] getRowWaste() {
-        return rowWaste;
     }
 
     public int getSurplusPlanks() {
@@ -401,6 +400,9 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
         g.drawString(s, x - fm.stringWidth(s) / 2, fm.getAscent() + y - (fm.getAscent() + fm.getDescent()) / 2);
     }
 
+    public List<Integer> getSegmentWaste() {
+        return segmentWaste;
+    }
 
     public int getFullRows() {
         int result = rows;
@@ -483,12 +485,9 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
             writePlankTypesCount(out, "Planks Used", getPlankTypesUsed());
             writePlankTypesCount(out, "Planks Spare", getPlankTypesSpare());
             out.println();
-            out.println("Row Waste");
-            for (int i = 0; i<rows; i++) {
-                int plank = rowOffsets[i + 1] - 1;
-                if (plank >= 0) {
-                    out.println(get(plank).getLength()+"="+rowWaste[i]);
-                }
+            out.println("Segment Waste");
+            for (int i = 0; i < segmentWastePlanks.size(); i++) {
+                out.println(segmentWastePlanks.get(i).getLength()+"="+segmentWaste.get(i));
             }
         }
         finally {
