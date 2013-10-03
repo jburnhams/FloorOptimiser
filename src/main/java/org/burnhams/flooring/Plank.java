@@ -42,9 +42,11 @@ public class Plank {
 
     public static List<Plank> createPlanks(int width, Map<Integer, Integer> lengths) {
         List<Plank> result = new ArrayList<>();
-        for (Map.Entry<Integer, Integer> e : lengths.entrySet()) {
-            for (int i = 0; i < e.getValue(); i++) {
-                result.add(new Plank(width, e.getKey()));
+        if (lengths!=null && !lengths.isEmpty()) {
+            for (Map.Entry<Integer, Integer> e : lengths.entrySet()) {
+                for (int i = 0; i < e.getValue(); i++) {
+                    result.add(new Plank(width, e.getKey()));
+                }
             }
         }
         return result;
@@ -52,8 +54,10 @@ public class Plank {
 
     public static List<Plank> createPlanks(int width, int... lengths) {
         List<Plank> result = new ArrayList<>(lengths.length);
-        for (int length : lengths) {
-            result.add(new Plank(width, length));
+        if (lengths!=null && lengths.length>0) {
+            for (int length : lengths) {
+                result.add(new Plank(width, length));
+            }
         }
         return result;
     }

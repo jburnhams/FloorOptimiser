@@ -12,7 +12,7 @@ public class RandomSwapNeighbour<T, U extends Solution<T>> extends Neighbourhood
     @Override
     public U getNeighbour(U candidate) {
         U result = (U)candidate.clone();
-        int size = candidate.size();
+        int size = candidate.totalSize();
         boolean swapped = false;
         while (!swapped) {
             int from = random.nextInt(size);

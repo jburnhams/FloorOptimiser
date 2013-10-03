@@ -27,7 +27,7 @@ public class FloorSolutionTest {
         assertThat(rectangularFloor.getArea()).isEqualTo(0.01*0.01);
         FloorSolution solution = new FloorSolution(rectangularFloor, PLANK_WIDTH, 8);
         assertThat(solution.getRows()).isEqualTo(4);
-        assertThat(solution.size()).isEqualTo(1);
+        assertThat(solution.totalSize()).isEqualTo(1);
         assertThat(solution.getPlankWidth()).isEqualTo(PLANK_WIDTH);
         assertThat(solution.getFloor().getWidth()).isEqualTo(10);
         assertThat(solution.getFloor().getMaxLength()).isEqualTo(10);
@@ -122,10 +122,12 @@ public class FloorSolutionTest {
     }
 
     @Test
-    public void shouldUseMultiLengthFloor1() throws IOException {
-        MultiLengthFloor floor = new MultiLengthFloor(2,10,6,12,2,10);
-        FloorSolution solution = new FloorSolution(floor, PLANK_WIDTH, PLANKS);
+    public void shouldUseMultiLengthFloorWithFixed() throws IOException {
+        MultiLengthFloor floor = new MultiLengthFloor(1,11,2,8,2,10,6,12,2,10);
+        FloorSolution solution = new FloorSolution(floor, PLANK_WIDTH, PLANKS, 5, 6);
         solution.evaluate();
+        BufferedImage image = solution.createImage(2000);
+        ImageIO.write(image, "PNG", new File("testmultilengthfloorwithfixed.png"));
         assertThat(solution.getSurplusLength()).isEqualTo(-1);
     }
 

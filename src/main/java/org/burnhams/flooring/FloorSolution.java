@@ -55,15 +55,19 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
     }
 
     public FloorSolution(Floor floor, int plankWidth, int... plankLengths) {
-        this(Plank.createPlanks(plankWidth, plankLengths), floor);
+        this(null, Plank.createPlanks(plankWidth, plankLengths), floor);
     }
 
-    public FloorSolution(Floor floor, int plankWidth, Map<Integer, Integer> plankLengths) {
-        this(Plank.createPlanks(plankWidth, plankLengths), floor);
+    public FloorSolution(Floor floor, int plankWidth, int[] plankLengths, int... fixedPrefix) {
+        this(Plank.createPlanks(plankWidth, fixedPrefix), Plank.createPlanks(plankWidth, plankLengths), floor);
     }
 
-    public FloorSolution(List<Plank> planks, Floor floor) {
-        super(planks);
+    public FloorSolution(Floor floor, int plankWidth, Map<Integer, Integer> plankLengths, int... fixedLengths) {
+        this(Plank.createPlanks(plankWidth, fixedLengths), Plank.createPlanks(plankWidth, plankLengths), floor);
+    }
+
+    public FloorSolution(List<Plank> fixed, List<Plank> planks, Floor floor) {
+        super(fixed, planks);
         this.floor = floor;
         longestLength = floor.getMaxLength();
         plankWidth = planks.get(0).getWidth();
@@ -82,7 +86,7 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
             return;
         }
         rowOffsets = new int[rows+1];
-        plankOffsets = new int[super.size()];
+        plankOffsets = new int[super.totalSize()];
         segmentWaste = new ArrayList<>();
         segmentWastePlanks = new ArrayList<>();
         surplusLength = 0;
@@ -123,7 +127,7 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
         plankTypesUsed = new HashMap<>();
         plankTypesSpare = new HashMap<>();
 
-        for (int i = 0; i < size(); i++) {
+        for (int i = 0; i < totalSize(); i++) {
             Plank plank = get(i);
             if (currentRow >= rows) {
                 surplusLength += plank.getLength();
@@ -368,7 +372,7 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
             int yTo = (int)Math.round(plankHeight * i + plankHeight);
             int rowEnd = rowOffsets[i+1];
             if (rowEnd == 0) {
-                rowEnd = size();
+                rowEnd = totalSize();
             }
             for (int j = rowOffsets[i]; j < rowEnd; j++) {
                 Plank p = get(j);
@@ -446,7 +450,7 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
     public String getLengthsList() {
         StringBuilder result = new StringBuilder();
         int row = 1;
-        for (int i = 0; i<size(); i++) {
+        for (int i = 0; i< totalSize(); i++) {
             if (row < rowOffsets.length && i==rowOffsets[row]) {
                 result.append("\n");
                 row++;
@@ -514,6 +518,6 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
         } finally {
             br.close();
         }
-        return new FloorSolution(planks, floor);
+        return new FloorSolution(null, planks, floor);
     }
 }

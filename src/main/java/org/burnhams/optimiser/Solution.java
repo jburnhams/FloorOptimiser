@@ -1,28 +1,46 @@
 package org.burnhams.optimiser;
 
+import com.google.common.collect.ImmutableList;
+
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Random;
 
-public class Solution<T> implements Iterable<T>, Cloneable {
+public class Solution<T> implements Cloneable {
 
+    private final T[] fixedPrefix;
+    private final int fixedLength;
     private final T[] solution;
-    private final List<T> listView;
 
     protected boolean hasChanged = true;
 
     public Solution(Solution<T> other) {
-        this(Arrays.copyOf(other.solution, other.size()));
+        this(other.fixedPrefix, Arrays.copyOf(other.solution, other.solution.length));
     }
 
     public Solution(Collection<T> items) {
-        solution = items.toArray((T[])Array.newInstance(items.iterator().next().getClass(), items.size()));
-        listView = Arrays.asList(solution);
+        this(null, getArray(items));
+    }
+
+    public Solution(Collection<T> fixedPrefix, Collection<T> items) {
+        this(getArray(fixedPrefix), getArray(items));
     }
 
     @SafeVarargs
     public Solution(T... items) {
+        this(null, items);
+    }
+
+    public Solution(T[] fixedPrefix, T[] items) {
+        this.fixedPrefix = fixedPrefix;
+        fixedLength = fixedPrefix == null ? 0 : fixedPrefix.length;
         solution = items;
-        listView = Arrays.asList(solution);
+    }
+
+    private static <T> T[] getArray(Collection<T> items) {
+        return items==null||items.isEmpty()?null:items.toArray((T[])Array.newInstance(items.iterator().next().getClass(), items.size()));
     }
 
     public void shuffle() {
@@ -33,21 +51,24 @@ public class Solution<T> implements Iterable<T>, Cloneable {
         }
     }
 
-    @Override
-    public Iterator<T> iterator() {
-        return listView.iterator();
+    public int totalSize() {
+        return fixedLength + solution.length;
     }
 
-    public int size() {
+    public int swappableSize() {
         return solution.length;
     }
 
     public T get(int index) {
-        return solution[index];
+        return index < fixedLength ? fixedPrefix[index] : solution[index-fixedLength];
     }
 
     public List<T> getList() {
-        return new ArrayList<>(listView);
+        ImmutableList.Builder<T> builder = ImmutableList.builder();
+        if (fixedLength > 0) {
+            builder.add(fixedPrefix);
+        }
+        return builder.add(solution).build();
     }
 
     public boolean swap(int index1, int index2) {
