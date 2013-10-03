@@ -29,8 +29,12 @@ public class PropertiesConfiguration implements Configuration {
 
     public int getPlankWidth() {
         return getInteger("plank.width");
-
     }
+
+    public int[] getFixedPlanks() {
+        return getIntegers("plank.fixed");
+    }
+
 
     private WallEnclosedFloor getWallEnclosedFloor() {
         if (properties.containsKey("floor.horizontalLength")) {

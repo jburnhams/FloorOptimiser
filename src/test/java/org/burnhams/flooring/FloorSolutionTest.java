@@ -129,6 +129,7 @@ public class FloorSolutionTest {
         BufferedImage image = solution.createImage(2000);
         ImageIO.write(image, "PNG", new File("testmultilengthfloorwithfixed.png"));
         assertThat(solution.getSurplusLength()).isEqualTo(-1);
+        assertThat(solution.getUnswappableRows()).isEqualTo(1);
     }
 
     @Test

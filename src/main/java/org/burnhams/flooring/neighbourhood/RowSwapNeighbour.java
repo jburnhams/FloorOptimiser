@@ -13,12 +13,13 @@ public class RowSwapNeighbour extends NeighbourhoodFunction<Plank, FloorSolution
 
     @Override
     public FloorSolution getNeighbour(FloorSolution candidate) {
-        int fullRows = candidate.getFullRows();
+        int fixedRows = candidate.getUnswappableRows();
+        int fullRows = candidate.getFullRows() - fixedRows;
         int row1 = random.nextInt(fullRows);
         int row2 = random.nextInt(fullRows);
         while (row1 == row2) {
             row2 = random.nextInt(fullRows);
         }
-        return candidate.swapRows(row1, row2);
+        return candidate.swapRows(row1+fixedRows, row2+fixedRows);
     }
 }

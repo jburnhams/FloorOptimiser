@@ -13,12 +13,14 @@ public class WithinRowSwapNeighbour extends NeighbourhoodFunction<Plank, FloorSo
 
     @Override
     public FloorSolution getNeighbour(FloorSolution candidate) {
+        int fixedRows = candidate.getUnswappableRows();
         int fullRows = candidate.getFullRows();
-        int row = random.nextInt(fullRows);
+        int row = random.nextInt(fullRows - fixedRows)+fixedRows;
         int rowStart = candidate.getRowStart(row);
         int rowEnd = candidate.getRowEnd(row);
         int rowLength = rowEnd-rowStart;
         boolean swapped = false;
+        rowStart -= candidate.fixedSize();
         FloorSolution result = candidate.clone();
         for (int i = 0; i < rowLength && !swapped; i++) {
             int from = random.nextInt(rowLength)+rowStart;

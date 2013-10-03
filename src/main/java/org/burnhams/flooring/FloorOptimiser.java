@@ -34,7 +34,7 @@ public class FloorOptimiser {
     public FloorSolution optimise() throws ExecutionException {
         Floor floor = configuration.getFloor();
         FloorSolution initialSolution = new FloorSolution(
-                floor, configuration.getPlankWidth(), configuration.getPlankLengths()
+                floor, configuration.getPlankWidth(), configuration.getPlankLengths(), configuration.getFixedPlanks()
         );
         logger.info("Floor: "+floor.getWidth()+"x"+floor.getMaxLength()+" = "+floor.getArea()+"m2");
         initialSolution.shuffle();

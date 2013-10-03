@@ -416,6 +416,17 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
         return result;
     }
 
+    public int getUnswappableRows() {
+        int fixedLength = fixedSize();
+        for (int i = 0; i <= rows; i++) {
+            fixedLength -= rowOffsets[i];
+            if (fixedLength <= 0) {
+                return i;
+            }
+        }
+        throw new RuntimeException("Visited all rows but all fixed");
+    }
+
     public int getRowStart(int row) {
         return rowOffsets[row];
     }
@@ -443,7 +454,8 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
         if (rowEnd1 == 0 || rowEnd2 == 0) {
             throw new IllegalArgumentException("Must only swap full rows");
         }
-        result.swap(rowOffsets[row1], rowEnd1, rowOffsets[row2], rowEnd2);
+        int fixed = fixedSize();
+        result.swap(rowOffsets[row1]-fixed, rowEnd1-fixed, rowOffsets[row2]-fixed, rowEnd2-fixed);
         return result;
     }
 

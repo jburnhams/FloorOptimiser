@@ -59,6 +59,10 @@ public class Solution<T> implements Cloneable {
         return solution.length;
     }
 
+    public int fixedSize() {
+        return fixedLength;
+    }
+
     public T get(int index) {
         return index < fixedLength ? fixedPrefix[index] : solution[index-fixedLength];
     }
