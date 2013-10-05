@@ -9,7 +9,7 @@ public class FloorEvaluator implements Evaluator<Plank, FloorSolution> {
         solution.evaluate();
 
         cost += 100 * -Math.min(0,solution.getSurplusLength());
-        cost += 0.1 * solution.getTotalWaste();
+        cost += 1 * solution.getTotalWaste();
         cost -= 100 * solution.getSurplusPlanks();
 
         cost += 0.1 * solution.getAverageWeightedDistanceToClosestFurtherGap();
