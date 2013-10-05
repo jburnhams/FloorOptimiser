@@ -217,25 +217,27 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
         for (int row = 0; row < rows-1 && rowOffsets[row+2] > 0; row++) {
             for (; plankNum < rowOffsets[row+1]-1; plankNum++) {
                 int plankEnd = plankOffsets[plankNum] + get(plankNum).getLength();
-                int distance = getDistanceToEndClosestBelowGap(row+1, plankEnd);
+                if (plankEnd == plankOffsets[plankNum+1]) {
+                    int distance = getDistanceToEndClosestBelowGap(row+1, plankEnd);
 
-                totalJoinGap += distance;
-                double weightedGap = (double) maxPlankLength / Math.max(distance, 0.5);
-                totalWeightedJoinGap += weightedGap * weightedGap;
+                    totalJoinGap += distance;
+                    double weightedGap = (double) maxPlankLength / Math.max(distance, 0.5);
+                    totalWeightedJoinGap += weightedGap * weightedGap;
 
-                if (row < rows-2 && rowOffsets[row+3] > 0) {
-                    int furtherDistance = getDistanceToEndClosestBelowGap(row+2, plankEnd);
-                    weightedGap = (double) maxPlankLength / Math.max(furtherDistance, 0.5);
-                    totalWeightedFurtherJoinGap += weightedGap * weightedGap;
-                    furtherCount++;
-                }
+                    if (row < rows-2 && rowOffsets[row+3] > 0) {
+                        int furtherDistance = getDistanceToEndClosestBelowGap(row+2, plankEnd);
+                        weightedGap = (double) maxPlankLength / Math.max(furtherDistance, 0.5);
+                        totalWeightedFurtherJoinGap += weightedGap * weightedGap;
+                        furtherCount++;
+                    }
 
-                count++;
-                if (distance < minJoinGap) {
-                    minJoinGap = distance;
-                    minJoinGapCount = 1;
-                } else if (distance == minJoinGap) {
-                    minJoinGapCount++;
+                    count++;
+                    if (distance < minJoinGap) {
+                        minJoinGap = distance;
+                        minJoinGapCount = 1;
+                    } else if (distance == minJoinGap) {
+                        minJoinGapCount++;
+                    }
                 }
             }
             plankNum++;
