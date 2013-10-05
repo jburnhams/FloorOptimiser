@@ -419,8 +419,7 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
     public int getUnswappableRows() {
         int fixedLength = fixedSize();
         for (int i = 0; i <= rows; i++) {
-            fixedLength -= rowOffsets[i];
-            if (fixedLength <= 0) {
+            if (fixedLength - rowOffsets[i] <= 0) {
                 return i;
             }
         }

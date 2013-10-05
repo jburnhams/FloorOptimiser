@@ -35,6 +35,10 @@ public class PropertiesConfiguration implements Configuration {
         return getIntegers("plank.fixed");
     }
 
+    public int[] getUsedPlanks() {
+        return getIntegers("plank.used");
+    }
+
 
     private WallEnclosedFloor getWallEnclosedFloor() {
         if (properties.containsKey("floor.horizontalLength")) {
@@ -101,11 +105,14 @@ public class PropertiesConfiguration implements Configuration {
 
     public Map<Integer, Integer> getPlankLengths() {
         Map<Integer, Integer> result = new HashMap<>();
-        String[] lengths = properties.getProperty("plank.lengths").split(",");
-        for (String length : lengths) {
-            int l = Integer.valueOf(length);
+        int[] lengths = getIntegers("plank.lengths");
+        for (int l: lengths) {
             int c = getInteger("plank."+l);
             result.put(l,c);
+        }
+        int[] used = getUsedPlanks();
+        for (int u : used) {
+            result.put(u, result.get(u)-1);
         }
         return result;
     }
