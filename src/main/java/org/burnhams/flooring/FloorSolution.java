@@ -78,6 +78,13 @@ public class FloorSolution extends Solution<Plank> implements PreEvaluatable {
                 maxLength = p.getLength();
             }
         }
+        if (fixed != null) {
+            for (Plank p : fixed) {
+                if (p.getLength() > maxLength) {
+                    maxLength = p.getLength();
+                }
+            }
+        }
         maxPlankLength = maxLength;
     }
 
